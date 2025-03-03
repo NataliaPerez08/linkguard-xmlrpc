@@ -1,0 +1,15 @@
+# Archivos de python
+*.pyc
+*.pyo
+# Auxiliates de latex
+LaTex-Tesis/*.aux
+LaTex-Tesis/*.bbl
+LaTex-Tesis/*.flg
+LaTex-Tesis/*.log
+LaTex-Tesis/*.out
+LaTex-Tesis/*.toc
+LaTex-Tesis/*.blg
+LaTex-Tesis/*.fdb_latexmk
+LaTex-Tesis/*.synctex.gz
+LaTex-Tesis/*.fls
+LaTex-Tesis/*.pdf

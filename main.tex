@@ -1,0 +1,166 @@
+\documentclass[letterpaper,12pt,oneside]{article}
+\usepackage[top=1in, left=1.25in, right=1.25in, bottom=1in]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage[spanish]{babel}
+
+% Título tentativo
+\title{Propuesta de Tesis \\ Orquestador para WireGuard Minimalista: LinkGuard}
+\author{Natalia Abigail Pérez Romero \\ Asesor: Dr. José David Flores Peñaloza}
+\date{}  % Puedes agregar una fecha específica si lo deseas
+
+\begin{document}
+
+\maketitle
+
+% Propuesta de tema de Tesis (Título tentativo, justificación, objetivos, índice tentativo, bibliografía básica en orden alfabético), firmada de forma autógrafa por el estudiante y por el tutor.
+
+\section{Introducción}
+
+En la actualidad, y desde hace tiempo, las empresas al tener una presencia global con múltiples sucursales y empleados remotos requieren establecer conexiones seguras entre sus dispositivos. Para esto hay dos opciones: una línea de alquiler privada y dedicada o compartir una parte del ancho de banda con una línea existente, como Internet. La segunda opción es más económica y flexible, pero menos segura. De ahí surgen las redes privadas virtuales (VPN) que permiten establecer un túnel seguro dentro de una red pública tal como si estuvieran conectados en una red local. Adicionalmente, usuarios finales han encontrado en las VPN una forma de proteger su información y privacidad, además de acceder a contenido restringido geográficamente.
+
+Diferentes protocolos de VPN han sido desarrollados para responder a estos requerimientos, cada uno con sus propias características y funcionalidades, entre ellos OpenVPN y IPsec. Sin embargo, estos protocolos presentan problemas de seguridad, complejidad y rendimiento. Por ejemplo, OpenVPN es un protocolo de VPN de código abierto que utiliza el protocolo SSL/TLS para cifrar el tráfico de red, pero es lento y complejo de configurar. Por otro lado, IPsec es un protocolo de VPN que utiliza el protocolo IKEv2 para establecer un túnel seguro, pero es difícil de configurar y no es compatible con todos los dispositivos.
+
+En respuesta a estos problemas, se ha desarrollado un protocolo de VPN llamado WireGuard que es más simple, más rápido y más seguro que otros protocolos de VPN. WireGuard es más simple que otros protocolos de VPN porque utiliza un enfoque basado en claves públicas para establecer un túnel seguro, en lugar de utilizar certificados SSL/TLS como OpenVPN. WireGuard es más rápido que otros protocolos de VPN porque utiliza un enfoque basado en el kernel para cifrar y descifrar el tráfico de red, en lugar de utilizar un enfoque basado en el usuario como OpenVPN. WireGuard es más seguro que otros protocolos de VPN porque utiliza un enfoque basado en claves públicas para establecer un túnel seguro, en lugar de utilizar un enfoque basado en contraseñas como IPsec.
+
+Si bien WireGuard es un protocolo de VPN simple, la mayor de sus desventajas es la configuración de los pares dentro de la red. Por ejemplo, si se desea configurar una red privada virtual con 10 pares, se debe configurar manualmente cada par con la dirección IP y la clave pública de cada par. Esto puede ser un proceso tedioso y propenso a errores, especialmente si se desea configurar una red privada virtual con un gran número de pares.
+
+Una solución para esta dificultad es propuesta por Tailscale, el cual es un servicio VPN que hace que sus dispositivos y aplicaciones sean accesibles en cualquier parte del mundo, de forma segura y sin esfuerzo. Este software actúa en combinación con el kernel para establecer una comunicación VPN peer-to-peer o retransmitida con otros clientes utilizando el protocolo WireGuard. Tailscale puede abrir una conexión directa con el peer utilizando técnicas de NAT traversal como STUN o solicitar el reenvío de puertos a través de UPnP IGD, NAT-PMP o PCP \cite{tailscale_nat}. Si el software no consigue establecer una comunicación directa, recurre al protocolo DERP (Designated Encrypted Relay for Packets) proporcionados por la empresa \cite{tailscale_derp}. Las direcciones IPv4 asignadas a los clientes se encuentran en el espacio reservado NAT de nivel operador. Esto se eligió para evitar interferencias con las redes existentes \cite{tailscale_ip_pool} ya que el enrutamiento de tráfico a redes detrás del cliente es posible.
+
+Tailscale es una gran solución para la configuración de pares en WireGuard, pero no es una solución de código abierto. Al ofrecer más funcionalidades que las necesarias para la configuración de pares en WireGuard, Tailscale puede ser una solución costosa para empresas pequeñas o individuos que solo requieren configurar pares en WireGuard. Además, Tailscale no permite a los usuarios tener control total sobre la configuración de pares en WireGuard, ya que la configuración de pares en WireGuard se realiza a través de la interfaz de usuario de Tailscale y no a través de la línea de comandos. Y finalmente, Tailscale aumenta la superficie de ataque de la red privada virtual, ya que no solicita la autenticación al usar un servicio crítico como SSH entre los pares.
+
+Existe una alternativa de código abierto del servidor de control de Tailscale llamado Headscale. El objetivo de Headscale es proporcionar un servidor de código abierto que puedan utilizar para proyectos y laboratorios. Implementa un alcance estrecho, una sola Tailnet, adecuada para un uso personal o una pequeña organización de código abierto \cite{headscale}.
+
+Aunque Headscale sea una opción open-source, no cuenta con un cliente en el dispositivo final y únicamente permite crear una red privada.
+
+Por lo que en este trabajo se propone el desarrollo de un prototipo open-source de un sistema de control de configuración de pares minimalista usando el protocolo WireGuard, inspirado en Tailscale, el cual se adherirá a los principios de UNIX.
+
+Este prototipo de sistema permitirá automatizar la configuración de pares, mediante:
+
+\begin{itemize}
+    \item \textbf{Cliente}: Programa que se ejecutará en el dispositivo final, el cual consiste de:
+    \begin{itemize}
+        \item \textit{Cliente daemon}: Un servidor XML-RPC que actuará como daemon guardando, actualizando y manteniendo la configuración actual de los pares y el cliente.
+        \item \textit{Interfaz de cliente}: Un programa que actuará como interfaz recibiendo instrucciones por CLI e interactuando con el cliente daemon.
+    \end{itemize}
+    \item \textbf{Servidor Orquestador (LinkGuard)}: Un servidor XML-RPC que se encargará de orquestar y automatizar la configuración de los pares dentro de las redes privadas.
+\end{itemize}
+
+Se espera que este prototipo automatice la configuración de los pares en una VPN WireGuard, permitiendo que el servidor orquestador actúe como directorio conociendo la dirección IP del endpoint, puertos, llaves públicas, lista de IPs permitidas por cada par en cada red privada. También permitirá la comunicación entre dispositivos finales que no pueden comunicarse directamente, ya que actuará como intermediario en la comunicación.
+
+Se espera que este prototipo reduzca la superficie de ataque de la red privada virtual al no realizar más funcionalidad que la orquestación de los pares en WireGuard, evitando la autenticación al usar un servicio crítico como SSH entre los pares.
+
+Para evaluar el prototipo se propondrán tres escenarios con dos dispositivos finales:
+
+\begin{itemize}
+    \item \textbf{Todos los dispositivos finales son alcanzables}: Es decir, tanto el orquestador como los dispositivos finales pueden comunicarse entre sí porque están en la misma red o cuentan con IPs públicas. No existen restricciones como firewalls o NATs.
+    \item \textbf{Uno de los dispositivos es alcanzable}: En este escenario, el orquestador y un dispositivo final pueden comunicarse entre sí, pero el otro dispositivo final no puede comunicarse con el orquestador. El orquestador actuará como intermediario en la comunicación.
+    \item \textbf{Solo el Orquestador es alcanzable}: Los dispositivos finales no pueden comunicarse entre sí directamente, pero pueden comunicarse con el orquestador, que actuará como intermediario en la comunicación.
+\end{itemize}
+
+\section{Justificación}
+
+Ante los requerimientos de usuarios finales y empresas de establecer conexiones seguras entre sus dispositivos surgen las VPN. Diferentes protocolos entre ellos WireGuard, el cual destaca por ser simple, rápido y seguro.
+
+La configuración manual de pares en WireGuard implica la asignación precisa de llaves y direcciones IP para cada conexión, lo que en escenarios de múltiples dispositivos puede volverse no solo tedioso, sino propenso a errores que comprometen la seguridad y el rendimiento de la red. En entornos dinámicos, donde los dispositivos se conectan y desconectan con frecuencia, mantener la configuración actualizada puede ser un reto considerable.
+
+Así surge Tailscale como sistema orquestador, pero a pesar de que facilita la configuración de conexiones WireGuard, su naturaleza de código cerrado introduce incertidumbre sobre el control total de la seguridad en las redes, lo que podría representar un riesgo si se maneja información sensible. Además, los servicios adicionales que ofrece, si bien útiles en algunos casos, incrementan la superficie de ataque, lo que expone a los usuarios a potenciales vulnerabilidades que podrían ser explotadas.
+
+Si bien Headscale ofrece una alternativa open-source, su diseño actual no incluye un cliente nativo para la configuración automática en dispositivos finales, lo que limita su capacidad de crear una experiencia de usuario simplificada. Otra limitación es que solo permite la creación de una red privada, lo que restringe su utilidad en escenarios donde se requiere la comunicación entre múltiples redes privadas.
+
+La necesidad de proteger la información y la privacidad de los usuarios no debería estar limitada por el dinero, tiempo o la complejidad de configuración de los protocolos de VPN.
+
+Así, este trabajo propone el desarrollo de un prototipo open-source de un sistema de control de configuración de pares minimalista usando el protocolo WireGuard, con el objetivo de automatizar la configuración de pares y facilitar la administración de redes seguras. A diferencia de soluciones robustas y complejas, el enfoque minimalista busca ofrecer una herramienta liviana y eficiente, ideal para pequeñas y medianas organizaciones que necesitan una solución confiable, pero sin la carga de una implementación costosa y compleja.
+
+Al eliminar las barreras asociadas con el costo, la complejidad y la dependencia de servicios comerciales, este proyecto no solo promueve una mayor accesibilidad a soluciones de seguridad robustas, sino que también contribuye al ecosistema de software libre, brindando a la comunidad una herramienta que puede ser adoptada y adaptada fácilmente para satisfacer una amplia gama de necesidades. Esto ofrece una alternativa práctica y confiable para usuarios finales y pequeñas empresas.
+
+\section{Objetivos}
+
+El objetivo principal es desarrollar un prototipo open-source de un sistema de control de configuración de pares minimalista usando el protocolo WireGuard, inspirado en Tailscale y adherido a los principios de UNIX de modularidad, claridad, composición, separación, simplicidad, transparencia, solidez, representación, menor sorpresa, silencio y reparación. Este sistema tiene la finalidad de automatizar la configuración y sincronización de pares en una VPN WireGuard.
+
+Permitirá a los usuarios automatizar la configuración de los pares de una VPN WireGuard mediante un servidor orquestador y un cliente que se ejecutará en el dispositivo final.
+
+De forma que el cliente en el dispositivo final recibirá una vez la configuración por CLI de los pares y la mantendrá actualizada gracias a que enviará esta información al servidor orquestador que actuará como directorio conociendo la dirección IP del endpoint, puertos, llaves públicas, lista de IPs permitidas por cada par en cada red privada.
+
+Además, el servidor orquestador permitirá la comunicación entre dispositivos finales que no pueden comunicarse directamente, ya que actuará como intermediario en la comunicación.
+
+Finalmente, en este trabajo se validará la funcionalidad y robustez del prototipo mediante pruebas en diferentes escenarios, evaluando su impacto en la simplificación de la configuración y gestión de redes VPN WireGuard.
+
+\section{Índice Tentativo}
+
+\begin{enumerate}
+    \item \textbf{Introducción}
+    \begin{enumerate}
+        \item VPN
+        \item WireGuard
+        \item Tailscale
+        \item NAT
+        \item Firewall
+    \end{enumerate}
+    \item \textbf{Desarrollo}
+    \begin{enumerate}
+        \item Objetivos del programa
+        \item Funcionalidad del orquestador
+        \item Descripción del orquestador
+        \item Componentes del orquestador
+        \item Flujo del programa
+        \item Casos de uso
+    \end{enumerate}
+    \item \textbf{Pruebas y Evaluación de Resultados}
+    \begin{enumerate}
+        \item Metodología de evaluación
+        \item Resultados de la evaluación
+    \end{enumerate}
+    \item \textbf{Conclusiones y Trabajo a Futuro}
+    \item \textbf{Bibliografía}
+\end{enumerate}
+
+\section{Bibliografía Básica}
+
+\begin{thebibliography}{99}
+
+\bibitem{computer_networking}
+Kurose, J. F., y Ross, K. W. (2017). \textit{Computer Networking: A Top-Down Approach}. Pearson, 7ma edición.
+
+\bibitem{vpn_protocols}
+Narayan, S., Williams, C. J., Hart, D. K., y Qualtrough, M. W. (2015). Network performance comparison of VPN protocols on wired and wireless networks. \textit{2015 International Conference on Computer Communication and Informatics (ICCCI)}. doi:10.1109/iccci.2015.7218077
+
+\bibitem{vpn_comparison}
+Abdulazeez, A., Salim, B., Zeebaree, D. y Doghramachi, D. (2020). Comparison of VPN Protocols at Network Layer Focusing on WireGuard Protocol. \textit{International Association of Online Engineering}. Recuperado de https://www.learntechlib.org/p/218341/.
+
+\bibitem{wireguard}
+WireGuard. \textit{WireGuard: Fast, Modern, Secure VPN Tunnel}. Disponible en: \url{https://www.wireguard.com/}
+
+\bibitem{tailscale_overview}
+Tailscale. \textit{What is Tailscale?} Disponible en: \url{https://tailscale.com/kb/1151/what-is-tailscale/}
+
+\bibitem{tailscale_derp}
+Tailscale. \textit{Terminology and Concepts}. Disponible en: \url{https://tailscale.com/kb/1155/terminology-and-concepts#relay}
+
+\bibitem{tailscale_nat}
+Tailscale. \textit{Troubleshooting Device Connectivity}. Disponible en: \url{https://tailscale.com/kb/1411/device-connectivity#nat-types}
+
+\bibitem{nat_traversal}
+Tailscale. \textit{How NAT Traversal Works}. Disponible en: \url{https://tailscale.com/blog/how-nat-traversal-works}
+
+\bibitem{tailscale_ip_pool}
+Tailscale. \textit{IP Pool}. Disponible en: \url{https://tailscale.com/kb/1304/ip-pool}
+
+\bibitem{headscale}
+Headscale. \textit{An Open Source, Self-Hosted Implementation of the Tailscale Control Server}. Disponible en: \url{https://github.com/juanfont/headscale}
+
+\bibitem{linux_routing}
+Linux Documentation Project. \textit{Linux Advanced Routing and Traffic Control HOWTO}. Disponible en: \url{https://tldp.org/HOWTO/Adv-Routing-HOWTO/}
+
+\bibitem{linux_network_admin}
+Bautts, M., y Dawson, M. (2000). \textit{Linux Network Administrator’s Guide}. O’Reilly Media, 3ra edición.
+
+\bibitem{linux_masquerade}
+Bautts, M., y Dawson, M. (2000). \textit{Linux IP Masquerade HOWTO}. Disponible en: \url{https://tldp.org/HOWTO/IP-Masquerade-HOWTO/}
+
+\bibitem{unix_philosophy}
+Basics of the Unix Philosophy. Disponible en: \url{https://cscie2x.dce.harvard.edu/hw/ch01s06.html}
+
+\end{thebibliography}
+
+\end{document}

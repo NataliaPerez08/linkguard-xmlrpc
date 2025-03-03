@@ -1,0 +1,80 @@
+Step 1: Enable IP Forwarding on Host Z
+First, ensure that IP forwarding is enabled on host Z. This allows the system to forward packets between interfaces.
+
+# Enable IP forwarding for the current session
+sudo sysctl -w net.ipv4.ip_forward=1
+
+# Enable IP forwarding permanently by editing the sysctl configuration
+echo "net.ipv4.ip_forward = 1" | sudo tee -a /etc/sysctl.conf
+
+# Apply the changes
+sudo sysctl -p
+
+Step 2: Configure WireGuard Interfaces
+On Host Z
+Create and configure the WireGuard interface on host Z to accept connections from both host A and host B.
+
+Create the WireGuard configuration file, e.g., /etc/wireguard/wg0.conf:
+
+[Interface]
+PrivateKey = <HostZ_PrivateKey>
+Address = 10.0.0.1/24
+
+[Peer]
+PublicKey = <HostA_PublicKey>
+AllowedIPs = 10.0.0.2/32
+
+[Peer]
+PublicKey = <HostB_PublicKey>
+AllowedIPs = 10.0.0.3/32
+
+Bring up the WireGuard interface:
+sudo wg-quick up wg0
+
+On Host A
+Create and configure the WireGuard interface on host A to connect to host Z.
+
+Create the WireGuard configuration file, e.g., /etc/wireguard/wg0.conf:
+
+[Interface]
+PrivateKey = <HostA_PrivateKey>
+Address = 10.0.0.2/24
+
+[Peer]
+PublicKey = <HostZ_PublicKey>
+Endpoint = <HostZ_IP>:<HostZ_Port>
+AllowedIPs = 10.0.0.1/32, 10.0.0.3/32
+Bring up the WireGuard interface:
+
+sudo wg-quick up wg0
+On Host B
+Create and configure the WireGuard interface on host B to connect to host Z.
+
+Create the WireGuard configuration file, e.g., /etc/wireguard/wg0.conf:
+
+[Interface]
+PrivateKey = <HostB_PrivateKey>
+Address = 10.0.0.3/24
+
+[Peer]
+PublicKey = <HostZ_PublicKey>
+Endpoint = <HostZ_IP>:<HostZ_Port>
+AllowedIPs = 10.0.0.1/32, 10.0.0.2/32
+Bring up the WireGuard interface:
+
+sudo wg-quick up wg0
+Step 3: Set Up IP Tables Rules on Host Z
+To allow traffic to be forwarded between host A and host B, you need to set up appropriate iptables rules on host Z.
+
+# Allow forwarding traffic from wg0 interface
+sudo iptables -A FORWARD -i wg0 -o wg0 -j ACCEPT
+
+# Allow traffic from host A to host B and vice versa
+sudo iptables -t nat -A POSTROUTING -s 10.0.0.2/32 -d 10.0.0.3/32 -o wg0 -j MASQUERADE
+sudo iptables -t nat -A POSTROUTING -s 10.0.0.3/32 -d 10.0.0.2/32 -o wg0 -j MASQUERADE
+Step 4: Persist iptables Rules
+To make sure the iptables rules persist across reboots, you can save them using iptables-save or by using a tool like iptables-persistent.
+
+# Save the iptables rules
+sudo iptables-save > /etc/iptables/rules.v4
+Now, host Z should be properly configured to relay traffic between host A and host B using WireGuard.

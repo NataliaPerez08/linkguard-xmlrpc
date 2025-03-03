@@ -1,0 +1,11 @@
+# python3 main.py  crear_peer <public_key> <allowed_ips> <ip_cliente> <listen_port>
+
+python3 main.py  crear_peer xTIBA5rboUvnH4htodjb6e697QjLERt1NAB4mZqp8Dg= 192.168.68.0/22 
+192.168.68.94 8172
+
+# python3 main.py registrar_como_peer <nombre> <id_red_privada> <ip_cliente> <puerto_cliente>
+
+# wg set wg0 listen-port 51820 private-key /path/to/private-key peer ABCDEF... allowed-ips 192.168.88.0/24 endpoint 209.202.254.14:8172
+
+
+python3 main.py registrar_como_peer e1 0 192.168.68.94 8172
