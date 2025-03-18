@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  alma1:
+    build: .
+    container_name: alma1
+    hostname: alma1
+    tty: true
+    stdin_open: true
+    volumes:
+      - ./shared:/shared
+    networks:
+      - almanet
+    cap_add:
+      - NET_ADMIN
+
+  alma2:
+    build: .
+    container_name: alma2
+    hostname: alma2
+    tty: true
+    stdin_open: true
+    volumes:
+      - ./shared:/shared
+    networks:
+      - almanet
+    cap_add:
+      - NET_ADMIN
+
+  alma3:
+    build: .
+    container_name: alma3
+    hostname: alma3
+    tty: true
+    stdin_open: true
+    volumes:
+      - ./shared:/shared
+    networks:
+      - almanet
+    cap_add:
+      - NET_ADMIN
+
+networks:
+  almanet:
+    driver: bridge
