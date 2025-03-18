@@ -9,7 +9,7 @@ services:
     networks:
       - wg_network
     command: >
-      sh -c "apk add --no-cache wireguard-tools net-tools git &&
+      sh -c "apk add --no-cache net-tools git &&
              tail -f /dev/null"
 
   machine2:
@@ -20,7 +20,7 @@ services:
     networks:
       - wg_network
     command: >
-      sh -c "apk add --no-cache wireguard-tools net-tools git &&
+      sh -c "apk add --no-cache net-tools git &&
              tail -f /dev/null"
 
   machine3:
@@ -31,7 +31,7 @@ services:
     networks:
       - wg_network
     command: >
-      sh -c "apk add --no-cache wireguard-tools net-tools git &&
+      sh -c "apk add --no-cache net-tools git &&
              tail -f /dev/null"
 
 networks:
