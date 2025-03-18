@@ -12,8 +12,7 @@ import sys
 
 class Servidor:
     def __init__(self):
-        dir = "0.0.0.0"
-        self.dir = "localhost"
+        self.dir = "0.0.0.0"
         self.port = 8000
         self.xmlrpc_server = SimpleXMLRPCServer((self.dir, self.port))
         self.xmlrpc_server.register_instance(self)

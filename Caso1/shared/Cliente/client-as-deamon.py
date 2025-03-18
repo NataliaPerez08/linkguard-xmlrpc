@@ -15,9 +15,7 @@ from os import geteuid
 from sys import exit
 
 # Servidor en la nube
-dir_servidor="http://natalia-testing.online:8000/"
-dir_servidor="http://0.0.0.0:8000/"
-#dir_servidor="https://fictional-space-happiness-9w69pjgw4xg3xjx9-8000.app.github.dev"
+dir_servidor="http://172.20.0.10:8000/"
 
 orquestador = xmlrpc.client.ServerProxy(dir_servidor, allow_none=True)
 
