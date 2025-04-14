@@ -2,12 +2,12 @@ import ipaddress
 from EndPoint import Endpoint
 
 class PrivateNetwork:
-    def __init__(self, id_red, name, ip_addr, mask_network):
+    def __init__(self, id_red, name, segment, mask_network):
         self.id = id_red
         self.name = name
         
         self.mask_network = mask_network
-        self.ip_addr = ipaddress.IPv4Network(f"{ip_addr}/{mask_network}")
+        self.segment = ipaddress.IPv4Network(f"{segment}/{mask_network}")
         
         self.available_hosts = self.calcule_network_range()
         self.num_endpoints = 0
@@ -24,8 +24,8 @@ class PrivateNetwork:
     def get_endpoints(self):
         return self.endpoints
     
-    def get_ip_addr(self):
-        return self.ip_addr
+    def get_segment(self):
+        return self.segment
     
     def get_mask_network(self):
         return self.mask_network
@@ -39,18 +39,18 @@ class PrivateNetwork:
         self.endpoints[str(endpoint.id)] = endpoint
 
     def get_network_mask(self):
-        return self.ip_addr.netmask
+        return self.segment.netmask
 
-    def set_ip_addr(self, ip_addr):
-        self.ip_addr = ipaddress.IPv4Network(ip_addr)
+    def set_segment(self, segment):
+        self.segment = ipaddress.IPv4Network(segment)
 
     def set_network_mask(self, mask_network):
         self.mask_network = mask_network
-        ip = self.ip_addr.exploded.split('/')[0]
-        self.ip_addr = ipaddress.IPv4Network(f"{ip}/{mask_network}")
+        ip = self.segment.exploded.split('/')[0]
+        self.segment = ipaddress.IPv4Network(f"{ip}/{mask_network}")
 
     def calcule_network_range(self):
-        hosts = list(self.ip_addr.hosts())
+        hosts = list(self.segment.hosts())
         self.available_hosts = hosts.pop(0)
         return hosts
     
@@ -85,4 +85,4 @@ class PrivateNetwork:
         
 
     def __str__(self):
-        return "ID: " + str(self.id) + " IP Address: " + str(self.ip_addr) + " Mask Network: " + str(self.mask_network) 
+        return "ID: " + str(self.id) + " IP Address: " + str(self.segment) + " Mask Network: " + str(self.mask_network) 

@@ -36,30 +36,28 @@ class ConfiguradorWireguardCliente:
         """
         print("Creando interfaz...")
         # Si es Linux
-        if os.name == "posix":
-            print("La interfaz no existe.")
-            os.system(f"ip link add dev wg0 type wireguard")
-            os.system(f"ip address add {ip_wg} dev wg0")
+        
+        print("La interfaz no existe.")
+        os.system(f"ip link add dev wg0 type wireguard")
+        os.system(f"ip address add {ip_wg} dev wg0")
 
-            # Configurar la interfaz
-            # Construct the command
-            command = [
-                "wg", "set", "wg0",
-                "listen-port", str(self.listen_port),
-                "private-key", "/dev/stdin",
-                "peer", self.public_key
-            ]
+        # Configurar la interfaz
+        # Construct the command
+        command = [
+            "wg", "set", "wg0",
+            "listen-port", str(self.listen_port),
+            "private-key", "/dev/stdin",
+            "peer", self.public_key
+        ]
 
-            # Run the command and pass the private key as input
-            subprocess.run(command, input=self.private_key.encode(), check=True)
+        # Run the command and pass the private key as input
+        subprocess.run(command, input=self.private_key.encode(), check=True)
 
-            print("Interfaz creada!")
-            print("Llave publica: ", self.public_key)
+        print("Interfaz creada!")
+        print("Llave publica: ", self.public_key)
 
-            os.system("ip link set up dev wg0")
-            return self.private_key, self.public_key
-        else:
-            print("Sistema operativo no soportado.")
+        os.system("ip link set up dev wg0")
+        return self.private_key, self.public_key
 
     def check_interface(self):
         """
@@ -71,7 +69,7 @@ class ConfiguradorWireguardCliente:
         else:
             return False
 
-    def create_peer(self, public_key, allowed_ips, endpoint_ip, listen_port, ip_servidor):
+    def create_peer(self, public_key, allowed_ips, endpoint_ip, listen_port):
         # Añadir peer
         print("Añadiendo peer...")
         
@@ -82,6 +80,7 @@ class ConfiguradorWireguardCliente:
         print(f"wg set wg0 peer {public_key} allowed-ips {allowed_ips} endpoint {endpoint_ip}:{listen_port}")
         ossy = os.system(f"wg set wg0 peer {public_key} allowed-ips {allowed_ips} endpoint {endpoint_ip}:{listen_port}")
         print(type(ossy))
+        return ossy
         
     
     def get_wg_state(self):

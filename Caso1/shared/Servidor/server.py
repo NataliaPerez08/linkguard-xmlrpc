@@ -25,6 +25,12 @@ class Servidor:
         # Llave pública de Wireguard del orquestador
         self.wg_private_key = None
         self.wg_public_key = None
+        # La ip del servidor Wireguard
+        self.wg_ip = "10.0.0.1"
+        # El puerto del servidor Wireguard
+        self.wg_port = 51820
+        # La ip publica del servidor Wireguard
+        self.public_ip = "172.20.0.11"
 
     def iniciar(self):
         """
@@ -171,16 +177,15 @@ class Servidor:
         Recupera las IPs permitidas de una red privada
         """
         private_network = self.get_private_network_by_id(private_network_id)
-        if type(private_network) is not rp.PrivateNetwork:
-            print("Error al obtener la red privada!")
-            return -1
         return private_network.get_available_hosts()
 
 
     def get_wireguard_config(self):
-        result = wg.get_wg_state()
-        print(type(result))
-        return wg.get_wg_state()
+        print("Configurando Wireguard...")
+        print("Obteniendo la llave pública del servidor...")
+        print("Llave pública del servidor: ", self.wg_public_key)
+        print("Puerto Wireguard del servidor: ", self.wg_port)
+        return self.wg_public_key, self.wg_port, self.public_ip
 
     def create_peer(self, public_key, allowed_ips, endpoint_ip_WG, listen_port, ip_cliente):
         print("Crear peer en el servidor")
@@ -196,9 +201,10 @@ class Servidor:
         private_key, public_key = wg.create_keys()
         self.wg_public_key = public_key
         self.wg_private_key = private_key
-
-        ip_wg = "10.0.0.1"
-        wg.create_wg_interface(ip_wg=ip_wg, public_key=public_key, private_key=private_key)
+        # Crear la interfaz de Wireguard
+        self.wg_ip = "10.0.0.1"
+        self.wg_port = 51820
+        wg.create_wg_interface(self.wg_ip, public_key=public_key, private_key=private_key)
 
     def connect_peers(ip_i, ip_j, port_i, port_j):
         # Set Up IP Tables Rules on Host Z To allow traffic to be forwarded between host A and host B, you need to set up appropriate iptables rules on host Z.

@@ -16,6 +16,7 @@ from sys import exit
 
 # Servidor en la nube
 dir_servidor="http://172.20.0.10:8000/"
+#dir_servidor="http://localhost:8000/"
 
 orquestador = xmlrpc.client.ServerProxy(dir_servidor, allow_none=True)
 
@@ -27,6 +28,7 @@ wg_private_key = None
 wg_ip = None
 wg_port = None
 actual_user = None
+public_ip = "172.20.0.10"
 
 # Create server
 xmlrpc_server = SimpleXMLRPCServer((dir_local,port_local),  logRequests=True)
@@ -157,20 +159,24 @@ def configure_as_peer( nombre_endpoint, id_red_privada, ip_cliente, listen_port)
     # Verificar si la interfaz existe
     if wg.check_interface():
         print("Ya existe la interfaz.")
-        return -1
     else:
         print("La interfaz no existe.")
-        wg_private_key, wg_public_key = wg.create_wg_interface(ip_cliente)
+        # Crear la interfaz de Wireguard
+        init_wireguard_interface(public_ip)
 
     # Configurar peer en local
+    print("Obtener la clave publica del servidor...")
     allowed_ips = orquestador.get_allowed_ips(id_red_privada)
+    print("Allowed IPs: ", allowed_ips)
     # Es necesario registrar el orquestador como peer en el cliente
-    wg_pk_o = orquestador.get_public_key()
-    ip_servidor = orquestador.get_ip()
-    port_servidor = orquestador.get_port()
-    
-    print("Registrando peer en el cliente...")
-    result = wg.create_peer(wg_pk_o, allowed_ips, ip_cliente, listen_port)
+    wg_o_pk, wg_o_port, wg_o_ip = orquestador.get_wireguard_config()
+    print("Clave publica del servidor: ")
+    print(wg_o_pk)
+    print("Puerto del servidor: ", wg_o_port)
+    print("IP del servidor: ", wg_o_ip)
+
+    print("Crear el peer en el cliente...")
+    result = wg.create_peer(wg_o_pk, allowed_ips, wg_o_ip, wg_o_port)
     print("Peer registrado en el cliente!")
 
     # Registrar peer en el servidor

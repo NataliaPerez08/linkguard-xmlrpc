@@ -1,6 +1,13 @@
 import subprocess
 import os
 
+"""
+Script que genera una llave pública y privada de Wireguard y crea una interfaz wg.
+parameters:
+none
+returns:
+Private key, Public key
+"""
 def create_keys():
     """
     Genera las claves pública y privada de Wireguard.
@@ -22,7 +29,19 @@ def create_keys():
 
     return private_key, public_key
 
+"""
+parameters:
+ip_wg: IP de la interfaz wg.
+public_key: Llave pública del servidor.
+private_key: Llave privada del servidor.
+peer_public_key: Llave pública del peer.
+peer_allowed_ips: IPs permitidas del peer.
+peer_endpoint_ip: IP del endpoint del peer.
+peer_listen_port: Puerto del peer.
 
+returns:
+None
+"""
 def create_wg_interface(ip_wg, public_key, private_key, peer_public_key=None, peer_allowed_ips=None, peer_endpoint_ip=None, peer_listen_port=None):
     """
     Crea una interfaz de Wireguard.
@@ -43,10 +62,12 @@ def create_wg_interface(ip_wg, public_key, private_key, peer_public_key=None, pe
         if peer_public_key is not None and peer_allowed_ips is not None and peer_endpoint_ip is not None and peer_listen_port is not None:
             os.system(f"wg set wg10 peer {peer_public_key} allowed-ips {peer_allowed_ips} endpoint {peer_endpoint_ip}:{peer_listen_port}")
 
-
         os.system("ip link set up dev wg10")
+        
+        return True
     else:
         print("Sistema operativo no soportado.")
+        return False
 
 def get_wg_state():
     """
@@ -70,6 +91,14 @@ def get_wg_interface_config():
     print("Obteniendo configuración de la interfaz de Wireguard...")
     os.system("wg showconf wg10")
 
+
+"""
+parameters:
+- public_key
+- allowed_ip
+- endpoint_ip
+- listen_port
+"""
 def create_peer(public_key, allowed_ips, endpoint_ip, listen_port):
         # Añadir peer
         print("Añadiendo peer...")
@@ -77,8 +106,8 @@ def create_peer(public_key, allowed_ips, endpoint_ip, listen_port):
         #wg set wg0 listen-port 51820 private-key /path/to/private-key peer ABCDEF... allowed-ips 192.168.88.0/24 endpoint 209.202.254.14:8172
         allowed_ips = "10.0.0.0/24"
         # sudo wg set wg10  peer pAY9t1yQPi4lVD84YULYhdiWGhECf2SRs7pll2Vnrgw= allowed-ips 192.168.2.0/24 endpoint 34.42.253.180:51820
-        print(f"wg set wg0 peer {public_key} allowed-ips {allowed_ips} endpoint {endpoint_ip}:{listen_port}")
-        os.system(f"wg set wg0 peer {public_key} allowed-ips {allowed_ips} endpoint {endpoint_ip}:{listen_port}")
+        print(f"wg set wg10 peer {public_key} allowed-ips {allowed_ips} endpoint {endpoint_ip}:{listen_port}")
+        os.system(f"wg set wg10 peer {public_key} allowed-ips {allowed_ips} endpoint {endpoint_ip}:{listen_port}")
 
 def setup_iptables(ip_i, ip_j, port_i, port_j):
     """

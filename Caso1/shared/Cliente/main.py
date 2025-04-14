@@ -79,20 +79,6 @@ if __name__ == "__main__":
             print("Uso: python3 main.py conectar_endpoint_directo <ip_wg_endpoint> <puerto_wg_endpoint>")
             sys.exit()
         deamon.conectar_endpoint_directo(sys.argv[2], sys.argv[3])
-
-    # python3 main.py obtener_clave_publica_servidor
-    elif comando == "obtener_clave_publica_servidor":
-        deamon.obtener_clave_publica_servidor()
-
-    # python3 main.py obtener_configuracion_wireguard_local
-    elif comando == "obtener_configuracion_wireguard_local":
-        # Verificar si el comando se ejecuto como administrador en Linux
-        deamon.obtener_configuracion_wireguard_local()
-
-    # python3 main.py obtener_configuracion_wireguard_servidor
-    elif comando == "obtener_configuracion_wireguard_servidor":
-        deamon.obtener_configuracion_wireguard_servidor()
-        
     
     # Si el cliente tiene ip publica debe ser incluida en la configuracion
     # python3 main.py añadir_ip_publica <ip>
