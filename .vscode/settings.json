@@ -125,5 +125,8 @@
             ],
             "env": {}
         }
+    ],
+    "python.analysis.extraPaths": [
+        "./Caso1/shared/Cliente/WG"
     ]
 }

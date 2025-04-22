@@ -8,7 +8,7 @@ import xmlrpc.client
 # Manejadores de red
 from conn_scapy import verificar_conectividad
 # Importar configurador de Wireguard
-import WG.ConfiguradorWireguardCliente as wg
+import ConfiguradorWireguardCliente
 
 # Importar os
 from os import geteuid
@@ -28,13 +28,14 @@ wg_private_key = None
 wg_ip = None
 wg_port = None
 actual_user = None
-public_ip = "172.20.0.10"
+public_ip = "172.20.0.1"
 
 # Create server
 xmlrpc_server = SimpleXMLRPCServer((dir_local,port_local),  logRequests=True)
 
 # Iniciar configurador de Wireguard
-wg = wg.ConfiguradorWireguardCliente()
+wg  = ConfiguradorWireguardCliente.ConfiguradorWireguardCliente()
+
 
 # Iniciar logger
 xmlrpc_logger = logging.getLogger('xmlrpc.server')

@@ -2,7 +2,7 @@ import subprocess
 import os
 
 """
-Script que genera una llave pública y privada de Wireguard y crea una interfaz wg.
+Funcion que genera una llave pública y privada de Wireguard y crea una interfaz wg.
 parameters:
 none
 returns:
@@ -69,29 +69,6 @@ def create_wg_interface(ip_wg, public_key, private_key, peer_public_key=None, pe
         print("Sistema operativo no soportado.")
         return False
 
-def get_wg_state():
-    """
-    Obtiene el estado de Wireguard.
-    """
-    print("Obteniendo estado de Wireguard...")
-    result = subprocess.run(["wg"], stdout=subprocess.PIPE).stdout.decode("utf-8")
-    return result
-
-def get_wg_interface():
-    """
-    Obtiene la interfaz de Wireguard.
-    """
-    print("Obteniendo interfaz de Wireguard...")
-    os.system("ip a show wg10")
-
-def get_wg_interface_config():
-    """
-    Obtiene la configuración de la interfaz de Wireguard.
-    """
-    print("Obteniendo configuración de la interfaz de Wireguard...")
-    os.system("wg showconf wg10")
-
-
 """
 parameters:
 - public_key
@@ -104,7 +81,7 @@ def create_peer(public_key, allowed_ips, endpoint_ip, listen_port):
         print("Añadiendo peer...")
         
         #wg set wg0 listen-port 51820 private-key /path/to/private-key peer ABCDEF... allowed-ips 192.168.88.0/24 endpoint 209.202.254.14:8172
-        allowed_ips = "10.0.0.0/24"
+        allowed_ips = allowed_ips[0]
         # sudo wg set wg10  peer pAY9t1yQPi4lVD84YULYhdiWGhECf2SRs7pll2Vnrgw= allowed-ips 192.168.2.0/24 endpoint 34.42.253.180:51820
         print(f"wg set wg10 peer {public_key} allowed-ips {allowed_ips} endpoint {endpoint_ip}:{listen_port}")
         os.system(f"wg set wg10 peer {public_key} allowed-ips {allowed_ips} endpoint {endpoint_ip}:{listen_port}")
@@ -126,3 +103,13 @@ def save_iptables():
     """
     print("Guardando reglas de iptables...")
     os.system("iptables-save > /etc/iptables/rules.v4")
+
+def check_interface():
+    """
+    Verifica si la interfaz wg10 existe.
+    """
+    try:
+        output = subprocess.check_output(["ip", "link", "show", "wg10"])
+        return True
+    except subprocess.CalledProcessError:
+        return False
