@@ -9,7 +9,7 @@ print("Llave privada:", private_key)
 print("Llave pública:", public_key)
 
 # Crear una interfaz wg
-ConfiguradorWireguardCliente.create_wg_interface(listen_port=51820, public_key=public_key, private_key=private_key, ip_wg="10.0.0.2")
+ConfiguradorWireguardCliente.create_wg_interface(public_key=public_key, private_key=private_key, ip_wg="10.0.0.2")
 print("Interfaz wg creada:", ConfiguradorWireguardCliente.check_interface())
 
 

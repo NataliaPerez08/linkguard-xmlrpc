@@ -23,34 +23,26 @@ def create_keys():
 
     return private_key, public_key
 
-def create_wg_interface(ip_wg,listen_port, public_key, private_key):
+def create_wg_interface(ip_wg, public_key, private_key, peer_public_key=None, peer_allowed_ips=None, peer_endpoint_ip=None, peer_listen_port=None):
     """
     Crea una interfaz de Wireguard.
     """
     print("Creando interfaz...")
-    if os.system("ip link show wg10") == 0:
+    if os.system("ip link show wg0") == 0:
             print("La interfaz ya existe.")
     else:
         print("La interfaz no existe.")
         os.system(f"ip link add dev wg0 type wireguard")
         os.system(f"ip address add {ip_wg} dev wg0")
 
-    # Configurar la interfaz
-    # Construct the command
-    command = [
-        "wg", "set", "wg0",
-        "listen-port", str(listen_port),
-        "private-key", "/dev/stdin",
-        "peer", public_key
-    ]
+    # Configurar la interfaz con las llaves  pública y privada
+        subprocess.run(["wg", "set", "wg0", "private-key", "/dev/stdin"], input=private_key.encode(), check=True)
+        os.system(f"wg set wg0 listen-port 51820")
+        if peer_public_key is not None and peer_allowed_ips is not None and peer_endpoint_ip is not None and peer_listen_port is not None:
+            os.system(f"wg set wg0 peer {peer_public_key} allowed-ips {peer_allowed_ips} endpoint {peer_endpoint_ip}:{peer_listen_port}")
 
-    # Run the command and pass the private key as input
-    subprocess.run(command, input=private_key.encode(), check=True)
-
-    print("Interfaz creada!")
-    print("Llave publica: ", public_key)
-
-    os.system("ip link set up dev wg0")
+        os.system("ip link set up dev wg0")
+    
     return private_key, public_key
 
 

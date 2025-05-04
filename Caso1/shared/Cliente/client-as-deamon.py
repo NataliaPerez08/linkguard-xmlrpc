@@ -86,14 +86,14 @@ def get_private_networks():
     priv_net = orquestador.get_private_networks()
     return priv_net
 
-def ver_endpoints(id_red_privada):
+def get_endpoints(id_red_privada):
     """
     Obtiene los endpoints de una red privada
     """
     endpoints = orquestador.get_endpoints(id_red_privada)
     return endpoints
 
-def conectar_endpoint( id_endpoint, id_red_privada):
+def connect_endpoint( id_endpoint, id_red_privada):
     print("Conectando endpoint...")
     # Encontrar la red privada
     private_network = orquestador.get_private_network_by_id(id_red_privada)
@@ -113,24 +113,11 @@ def conectar_endpoint( id_endpoint, id_red_privada):
     print(f"Red privada: {private_network}")
     verificar_conectividad(endpoint.ip_addr, private_network.last_host_assigned)
 
-def conectar_endpoint_directo( ip_endpoint, puerto_endpoint):
+def test_connection( ip_endpoint, puerto_endpoint):
     print("Conectando endpoint directo...")
     verificar_conectividad(ip_endpoint)
 
-def obtener_clave_publica_servidor():
-    print("Obteniendo clave pública...")
-    print(orquestador.get_public_key())
-
-def obtener_configuracion_wireguard_local():
-    print("Obteniendo configuracion..")
-    conf = wg.get_wg_state()
-    print(conf)
-
-def obtener_configuracion_wireguard_servidor():
-    print("Preguntar al servidor")
-    print(orquestador.get_wireguard_config())
-
-def cerrar_sesion():
+def close_session():
     result = orquestador.close_session()
     return result
     
@@ -217,13 +204,11 @@ if __name__ == "__main__":
     xmlrpc_server.register_function(whoami)
     xmlrpc_server.register_function(create_private_network)
     xmlrpc_server.register_function(get_private_networks)
-    xmlrpc_server.register_function(ver_endpoints)
-    xmlrpc_server.register_function(conectar_endpoint)
-    xmlrpc_server.register_function(conectar_endpoint_directo)
-    xmlrpc_server.register_function(obtener_clave_publica_servidor)
-    xmlrpc_server.register_function(obtener_configuracion_wireguard_local)
-    xmlrpc_server.register_function(obtener_configuracion_wireguard_servidor)
-    xmlrpc_server.register_function(cerrar_sesion)
+    xmlrpc_server.register_function(close_session)
+    xmlrpc_server.register_function(get_endpoints)
+    xmlrpc_server.register_function(connect_endpoint)
+    xmlrpc_server.register_function(test_connection)
+    xmlrpc_server.register_function(get_private_networks)
     xmlrpc_server.register_function(init_wireguard_interface)
     xmlrpc_server.register_function(configure_as_peer)
     xmlrpc_server.register_function(register_peer)
