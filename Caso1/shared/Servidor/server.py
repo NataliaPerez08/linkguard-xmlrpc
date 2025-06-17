@@ -31,6 +31,8 @@ class Servidor:
         # La ip publica del servidor Wireguard
         self.public_ip = "172.20.0.11"
 
+        self.wg = wg.WireGuardConfigurator()
+
     def iniciar(self):
         """
         Inicia el servidor
@@ -197,13 +199,13 @@ class Servidor:
 
     def init_wireguard(self):
         # Crear las claves pública y privada
-        private_key, public_key = wg.create_keys()
+        private_key, public_key = self.wg.create_keys()
         self.wg_public_key = public_key
         self.wg_private_key = private_key
         # Crear la interfaz de Wireguard
         self.wg_ip = "10.0.0.1"
         self.wg_port = 51820
-        wg.create_wg_interface(self.wg_ip, public_key=public_key, private_key=private_key)
+        self.wg.create_interface(self.wg_ip)
 
     def connect_peers(ip_i, ip_j, port_i, port_j):
         # Set Up IP Tables Rules on Host Z To allow traffic to be forwarded between host A and host B, you need to set up appropriate iptables rules on host Z.
