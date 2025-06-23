@@ -184,3 +184,12 @@ class ConfiguradorWireguardCliente:
                 print(f"Interfaz {self.interface_name} eliminada")
         except RuntimeError as e:
             print(f"Error al limpiar: {e}")
+
+    def check_interface(self) -> bool:
+        """
+        Verifica si la interfaz Wireguard existe.
+
+        Returns:
+            bool: True si la interfaz existe, False en caso contrario
+        """
+        return self._interface_exists()

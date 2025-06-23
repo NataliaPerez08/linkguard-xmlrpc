@@ -41,6 +41,23 @@ class Endpoint:
 
     def save_wireguard_config(self, config):
         self.config_wireguard = config
+
+    def set_wireguard_public_key(self, public_key):
+        self.wireguard_public_key = public_key
+
+    def set_wireguard_private_key(self, private_key):
+        self.wireguard_private_key = private_key
+
+    def set_allowed_ips(self, allowed_ips):
+        self.config_wireguard["allowed_ips"] = allowed_ips
+
+    def set_listen_port(self, listen_port):
+        self.wireguard_port = listen_port
+        self.config_wireguard["port"] = listen_port
+
+    def set_wireguard_ip(self, wireguard_ip):
+        self.wireguard_ip = wireguard_ip
+        self.config_wireguard["public_ip"] = wireguard_ip
         
     def __str__(self) -> str:
         str_endpoint = "[Interface]\n"

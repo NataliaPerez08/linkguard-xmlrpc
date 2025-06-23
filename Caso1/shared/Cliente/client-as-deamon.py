@@ -38,7 +38,7 @@ class ClientAsDeamon:
         # Create server
         self.xmlrpc_server = SimpleXMLRPCServer((self.dir_local, self.port_local), logRequests=True)
         # Iniciar configurador de Wireguard
-        self.wg = ConfiguradorWireguardCliente.ConfiguradorWireguardCliente()
+        self.wg = None
         # Iniciar logger
         self.xmlrpc_logger = logging.getLogger('xmlrpc.server')
 
@@ -48,6 +48,7 @@ class ClientAsDeamon:
         Inicia el servidor XML-RPC
         """
         print("Iniciando servidor XML-RPC...")
+        self.wg = ConfiguradorWireguardCliente.ConfiguradorWireguardCliente()
         # Create keys
         self.wg_private_key, self.wg_public_key = self.wg.create_keys()
         self.xmlrpc_server.register_instance(self)
@@ -178,14 +179,14 @@ class ClientAsDeamon:
         print("IP del servidor: ", wg_o_ip)
 
         print("Crear el peer en el cliente...")
-        result = self.wg.create_peer(wg_o_pk, allowed_ips, wg_o_ip, wg_o_port)
+        self.wg.create_peer(wg_o_pk, allowed_ips, wg_o_ip, wg_o_port)
         print("Peer registrado en el cliente!")
 
         # Registrar peer en el servidor
         print("Registrando peer en el servidor...,con la llave publica: ", self.wg_public_key)
         ip_wg_peer = self.orquestador.create_peer(self.wg_public_key, allowed_ips, endpoint_ip_WG, listen_port, ip_cliente)
         # Completar endpoint para incluir self.wg_public_key, allowed_ips, ip_cliente, listen_port
-        result = self.orquestador.complete_endpoint(id_red_privada, id_endpoint, self.wg_public_key, allowed_ips, ip_cliente, listen_port)
+        self.orquestador.complete_endpoint(id_red_privada, id_endpoint, self.wg_public_key, allowed_ips, ip_cliente, listen_port)
         print(result)
 
         return ip_wg_peer

@@ -4,7 +4,7 @@ from xmlrpc.server import SimpleXMLRPCServer
 # Mis clases
 from usuario import Usuario
 import PrivateNetwork as rp
-import WG.configGeneratorServer as wg
+from WG.configGeneratorServer import WireGuardConfigurator
 
 import os
 import sys
@@ -31,8 +31,7 @@ class Servidor:
         # La ip publica del servidor Wireguard
         self.public_ip = "172.20.0.11"
 
-        self.wg = wg.WireGuardConfigurator()
-
+        self.wg =  WireGuardConfigurator()
     def iniciar(self):
         """
         Inicia el servidor
@@ -59,14 +58,12 @@ class Servidor:
         """
         print("Buscando usuario...")
 
-        try:
-            usuario = self.usuarios[email]
-            if usuario is not None and usuario.password == password:
-                self.usuario = usuario
-                print("Usuario identificado!")
-                return True
-        except:
-            return False
+        usuario = self.usuarios[email]
+        if usuario is not None and usuario.password == password:
+            self.usuario = usuario
+            print("Usuario identificado!")
+            return True
+
         return  False
 
     def whoami(self):
@@ -109,7 +106,7 @@ class Servidor:
             user_private_networks = self.usuario.get_private_networks()
             return [str(red) for red in user_private_networks.values()]
 
-    def get_private_network_by_id(self, net_id):
+    def get_private_network_by_id(self, net_id)-> rp.PrivateNetwork:
         """
         Recupera una red privada por su id
         """
@@ -165,7 +162,7 @@ class Servidor:
             return []
         else:
             private_network = self.get_private_network_by_id(private_network_id)
-            return private_network.endpoints
+            return private_network.get_endpoints()
 
     def get_public_key(self):
         """
@@ -192,16 +189,15 @@ class Servidor:
         print("Crear peer en el servidor")
         print(public_key, allowed_ips, endpoint_ip_WG, listen_port, ip_cliente)
 
-        wg.create_peer(public_key, allowed_ips, ip_cliente, listen_port)
+        self.wg.create_peer(public_key, allowed_ips, ip_cliente, listen_port)
         print("IP de Wireguard asignada: ", endpoint_ip_WG)
         return endpoint_ip_WG
 
 
     def init_wireguard(self):
-        # Crear las claves pública y privada
-        private_key, public_key = self.wg.create_keys()
-        self.wg_public_key = public_key
-        self.wg_private_key = private_key
+        print("Creando claves de Wireguard...")
+        self.wg_private_key, self.wg_public_key = self.wg.create_keys()
+        print("Llave pública de Wireguard del servidor: ", self.wg_public_key)
         # Crear la interfaz de Wireguard
         self.wg_ip = "10.0.0.1"
         self.wg_port = 51820
