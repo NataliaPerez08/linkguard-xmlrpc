@@ -35,6 +35,9 @@ class PrivateNetwork:
             return []
         return [str(host) for host in self.available_hosts]
     
+    def get_endpoints(self):
+        return list(self.endpoints.values())
+    
     def add_endpoint(self, endpoint):
         self.endpoints[str(endpoint.id)] = endpoint
 
@@ -49,7 +52,7 @@ class PrivateNetwork:
         ip = self.segment.exploded.split('/')[0]
         self.segment = ipaddress.IPv4Network(f"{ip}/{mask_network}")
 
-    def calcule_network_range(self):
+    def calcule_network_range(self) -> list:
         hosts = list(self.segment.hosts())
         self.available_hosts = hosts.pop(0)
         return hosts
