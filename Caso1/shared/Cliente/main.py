@@ -2,219 +2,262 @@
 import xmlrpc.client
 import sys
 import os
+import logging
 
-# My serverd
-dir_local = "http://0.0.0.0:3041/"
+# Configuración de logger
+LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+logger = logging.getLogger('WireGuard-CLI')
 
-deamon = xmlrpc.client.ServerProxy(dir_local)
+# Constantes
+DEFAULT_DAEMON_ADDRESS = "http://0.0.0.0:3041/"
+
+class WireGuardCLI:
+    def __init__(self, daemon_address=DEFAULT_DAEMON_ADDRESS):
+        self.daemon = xmlrpc.client.ServerProxy(daemon_address)
+        logger.info(f"Conectado al daemon en {daemon_address}")
+
+    def registrar_usuario(self, nombre, email, password):
+        logger.info(f"Registrando usuario: {nombre} {email}")
+        result = self.daemon.register_user(nombre, email, password)
+        if result:
+            logger.info("Usuario registrado exitosamente")
+            print("✓ Usuario registrado")
+        else:
+            logger.warning("Error al registrar usuario: correo ya existente")
+            print("✗ Error: El correo ya está registrado")
+        return result
+
+    def identificar_usuario(self, email, password):
+        logger.info(f"Identificando usuario: {email}")
+        result = self.daemon.identify_me(email, password)
+        if result:
+            logger.info("Usuario identificado exitosamente")
+            print("✓ Usuario identificado")
+        else:
+            logger.warning("Error en identificación: credenciales inválidas")
+            print("✗ Error: Credenciales inválidas")
+        return result
+
+    def whoami(self):
+        logger.info("Obteniendo usuario actual")
+        result = self.daemon.whoami()
+        if result:
+            logger.info(f"Usuario actual: {result}")
+            print(f"👤 Usuario actual: {result}")
+        else:
+            logger.warning("No hay usuario identificado")
+            print("⚠️ No hay usuario identificado")
+        return result
+
+    def crear_red_privada(self, nombre, segmento=None):
+        logger.info(f"Creando red privada: {nombre}")
+        if segmento:
+            logger.debug(f"Usando segmento de red: {segmento}")
+            result = self.daemon.create_private_network(nombre, segmento)
+        else:
+            result = self.daemon.create_private_network(nombre)
+        
+        if result == -1:
+            logger.error("Error al crear red privada")
+            print("✗ Error al crear red privada")
+            return False
+        
+        logger.info(f"Red creada con ID: {result}")
+        print(f"✓ Red '{nombre}' creada - ID: {result}")
+        return True
+
+    def ver_redes_privadas(self):
+        logger.info("Solicitando listado de redes privadas")
+        result = self.daemon.get_private_networks()
+        if not result:
+            logger.warning("No se encontraron redes privadas")
+            print("No hay redes privadas disponibles")
+            return
+        
+        print("\n🔐 Redes Privadas:")
+        for i, red in enumerate(result, 1):
+            print(f"  {i}. {red['nombre']} (ID: {red['id']})")
+        return result
+
+    def ver_endpoints(self, id_red_privada):
+        logger.info(f"Solicitando endpoints para red ID: {id_red_privada}")
+        result = self.daemon.get_endpoints(id_red_privada)
+        if not result:
+            logger.warning(f"No se encontraron endpoints para red {id_red_privada}")
+            print("No hay endpoints disponibles")
+            return
+        
+        print(f"\n🔌 Endpoints para red {id_red_privada}:")
+        for i, endpoint in enumerate(result, 1):
+            print(f"  {i}. {endpoint['nombre']} (ID: {endpoint['id']})")
+        return result
+
+    def conectar_endpoint(self, id_endpoint, id_red_privada):
+        logger.info(f"Conectando endpoint {id_endpoint} en red {id_red_privada}")
+        try:
+            self.daemon.connect_endpoint(id_endpoint, id_red_privada)
+            logger.info("Solicitud de conexión enviada")
+            print("✓ Solicitud de conexión enviada")
+        except Exception as e:
+            logger.error(f"Error en conexión: {str(e)}")
+            print(f"✗ Error en conexión: {str(e)}")
+
+    def conectar_endpoint_directo(self, ip_endpoint, puerto_endpoint):
+        logger.info(f"Conectando directamente a {ip_endpoint}:{puerto_endpoint}")
+        try:
+            self.daemon.test_connection(ip_endpoint, puerto_endpoint)
+            logger.info("Prueba de conexión directa iniciada")
+            print("✓ Prueba de conexión iniciada")
+        except Exception as e:
+            logger.error(f"Error en conexión directa: {str(e)}")
+            print(f"✗ Error en conexión: {str(e)}")
+
+    def registrar_como_peer(self, nombre, id_red_privada, ip_cliente, puerto_cliente):
+        logger.info(f"Registrando peer: {nombre} en red {id_red_privada}")
+        if os.geteuid() != 0:
+            logger.error("Se requieren permisos de administrador")
+            print("✗ Error: Se requieren permisos de administrador")
+            return False
+        
+        result = self.daemon.configure_as_peer(nombre, id_red_privada, ip_cliente, puerto_cliente)
+        if result == -1:
+            logger.error("Error al configurar peer")
+            print("✗ Error al configurar peer")
+            return False
+        
+        logger.info("Peer configurado exitosamente")
+        print("✓ Peer configurado exitosamente")
+        return True
+
+    def cerrar_sesion(self):
+        logger.info("Cerrando sesión")
+        result = self.daemon.close_session()
+        if result:
+            logger.info("Sesión cerrada")
+            print("✓ Sesión cerrada")
+        else:
+            logger.warning("Error al cerrar sesión")
+            print("✗ Error al cerrar sesión")
+        return result
+
+    def obtener_clave_publica(self):
+        logger.info("Solicitando clave pública del cliente")
+        try:
+            result = self.daemon.get_client_public_key()
+            print(f"🔑 Clave pública: {result}")
+            return result
+        except AttributeError:
+            logger.error("Método no implementado en el daemon")
+            print("✗ Error: Función no disponible")
+            return None
+
+# Mapeo de comandos a funciones
+COMMAND_MAP = {
+    "registrar_usuario": {
+        "func": "registrar_usuario",
+        "args": 3,
+        "desc": "Registrar nuevo usuario: <nombre> <email> <password>"
+    },
+    "identificar_usuario": {
+        "func": "identificar_usuario",
+        "args": 2,
+        "desc": "Identificar usuario: <email> <password>"
+    },
+    "whoami": {
+        "func": "whoami",
+        "args": 0,
+        "desc": "Mostrar usuario actual"
+    },
+    "crear_red_privada": {
+        "func": "crear_red_privada",
+        "args": (1, 2),
+        "desc": "Crear red privada: <nombre> [segmento_red]"
+    },
+    "ver_redes_privadas": {
+        "func": "ver_redes_privadas",
+        "args": 0,
+        "desc": "Listar redes privadas disponibles"
+    },
+    "ver_endpoints": {
+        "func": "ver_endpoints",
+        "args": 1,
+        "desc": "Ver endpoints de una red: <id_red_privada>"
+    },
+    "conectar_endpoint": {
+        "func": "conectar_endpoint",
+        "args": 2,
+        "desc": "Conectar a endpoint: <id_endpoint> <id_red_privada>"
+    },
+    "conectar_endpoint_directo": {
+        "func": "conectar_endpoint_directo",
+        "args": 2,
+        "desc": "Conexión directa: <ip_wg_endpoint> <puerto_wg_endpoint>"
+    },
+    "registrar_como_peer": {
+        "func": "registrar_como_peer",
+        "args": 4,
+        "desc": "Registrar como peer: <nombre> <id_red_privada> <ip_cliente> <puerto_cliente>"
+    },
+    "obtener_clave_publica_cliente": {
+        "func": "obtener_clave_publica",
+        "args": 0,
+        "desc": "Obtener clave pública del cliente"
+    },
+    "cerrar_sesion": {
+        "func": "cerrar_sesion",
+        "args": 0,
+        "desc": "Cerrar sesión actual"
+    }
+}
+
+def mostrar_ayuda():
+    print("\n🔧 WireGuard CLI - Comandos disponibles:")
+    for cmd, info in COMMAND_MAP.items():
+        print(f"  {cmd.ljust(30)} {info['desc']}")
+    print("\n💡 Ejemplo: python cli.py registrar_usuario 'Juan Perez' juan@mail.com password123")
+    print("💡 Ejemplo: python cli.py crear_red_privada 'Mi Red Privada'")
+    print("💡 Ejemplo: python cli.py ver_redes_privadas")
+
+def main():
+    if len(sys.argv) < 2:
+        mostrar_ayuda()
+        return
+
+    comando = sys.argv[1]
+    cli = WireGuardCLI()
+
+    if comando not in COMMAND_MAP:
+        logger.error(f"Comando no reconocido: {comando}")
+        print(f"✗ Comando no reconocido: {comando}")
+        mostrar_ayuda()
+        return
+
+    cmd_info = COMMAND_MAP[comando]
+    args_esperados = cmd_info["args"]
+    args_recibidos = len(sys.argv) - 2  # Restamos comando y nombre de script
+    
+    # Validar número de argumentos
+    if isinstance(args_esperados, tuple):
+        if not (args_esperados[0] <= args_recibidos <= args_esperados[1]):
+            logger.error(f"Argumentos incorrectos para {comando}")
+            print(f"✗ Uso: {cmd_info['desc']}")
+            return
+    elif args_recibidos != args_esperados:
+        logger.error(f"Argumentos incorrectos para {comando}")
+        print(f"✗ Uso: {cmd_info['desc']}")
+        return
+
+    # Ejecutar comando
+    try:
+        func = getattr(cli, cmd_info["func"])
+        func(*sys.argv[2:2+args_recibidos])
+    except xmlrpc.client.Fault as e:
+        logger.error(f"Error en servidor: {e.faultString}")
+        print(f"✗ Error en servidor: {e.faultString}")
+    except Exception as e:
+        logger.exception(f"Error inesperado: {str(e)}")
+        print(f"✗ Error inesperado: {str(e)}")
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Uso: python3 main.py <comando> <argumentos>")
-        sys.exit()
-    comando = sys.argv[1]
-    
-    # python3 main.py registrar_usuario <nombre> <email> <password>
-    if comando == "registrar_usuario":
-        if len(sys.argv) != 5:
-            print("Uso: python3 main.py registrar_usuario <nombre> <email> <password>")
-            sys.exit()
-        result = deamon.register_user(sys.argv[2], sys.argv[3], sys.argv[4])
-        if result:
-            print("Usuario registrado!")
-        else:
-            print("Error al registrar el usuario! El correo ya esta registrado")
-
-    # python3 main.py identificar_usuario <email> <password>    
-    elif comando == "identificar_usuario":
-        if len(sys.argv) != 4:
-            print("Uso: python3 main.py identificar_usuario <email> <password>")
-            sys.exit()
-        result = deamon.identify_me(sys.argv[2], sys.argv[3])
-        if result:
-            print("Usuario identificado!")
-        else:
-            print("Error al identificar el usuario! El correo o la contraseña son incorrectos")
-    
-    # python3 main.py whoami
-    elif comando == "whoami":
-        result = deamon.whoami()
-        if result:
-            print(f"El usuario actual es: {result}")
-        else:
-            print("No hay usuario identificado")
-
-    # python3 main.py crear_red_privada <nombre>
-    elif comando == "crear_red_privada":
-        if len(sys.argv) != 3:
-            print("Uso: python3 main.py crear_red_privada <nombre>")
-            sys.exit()
-        deamon.create_private_network(sys.argv[2])
-
-    # python3 main.py ver_redes_privadas
-    elif comando == "ver_redes_privadas":
-        result = deamon.get_private_networks()
-        print(result)
-
-    # python3 main.py ver_endpoints <id_red_privada>
-    elif comando == "ver_endpoints":
-        if len(sys.argv) != 3:
-            print("Uso: python3 main.py ver_endpoints <id_red_privada>")
-            sys.exit()
-        result = deamon.ver_endpoints(sys.argv[2])
-        print(result)
-
-    # python3 main.py conectar_endpoint <id_endpoint> <id_red_privada>
-    elif comando == "conectar_endpoint":
-        # Este comando pregunta al servidor si el endpoint esta conectado y comparte su
-        # configuraracion. Le permite conectarse con relaying
-        if len(sys.argv) != 4:
-            print("Uso: python3 main.py conectar_endpoint <id_endpoint> <id_red_privada>")
-            sys.exit()
-        deamon.conectar_endpoint(sys.argv[2], sys.argv[3])
-
-    # python3 main.py conectar_endpoint_directo <ip_wg_endpoint> <puerto_wg_endpoint>
-    elif comando == "conectar_endpoint_directo":
-        if len(sys.argv) != 4:
-            print("Uso: python3 main.py conectar_endpoint_directo <ip_wg_endpoint> <puerto_wg_endpoint>")
-            sys.exit()
-        deamon.conectar_endpoint_directo(sys.argv[2], sys.argv[3])
-    
-    # Si el cliente tiene ip publica debe ser incluida en la configuracion
-    # python3 main.py añadir_ip_publica <ip>
-    elif comando == "añadir_ip_publica":
-        if len(sys.argv) != 3:
-            print("Uso: python3 main.py añadir_ip_publica <ip>")
-            sys.exit()
-        deamon.add_public_ip(sys.argv[2])
-        
-    # Consultar el ip registrada del cliente
-    # python3 main.py consultar_ip_publica_cliente
-    elif comando == "consultar_ip_publica_cliente":
-        ip = deamon.get_public_ip()
-        print(f"La ip publica del cliente es: {ip}")
-        
-    # Configurar el cliente como peer. Dado que tiene una ip publica
-    # python3 main.py registrar_como_peer <nombre> <id_red_privada> <ip_cliente> <puerto_cliente>
-    elif comando == "registrar_como_peer":
-        # Verificar si el comando se ejecuto como administrador en Linux
-        #if os.geteuid() != 0:
-        #    print("Se necesita permisos de administrador para ejecutar el comando")
-        #    sys.exit()
-            
-        if len(sys.argv) != 6:
-            print("Uso: python3 main.py registrar_como_peer <nombre> <id_red_privada> <ip_cliente> <puerto_cliente>")
-            sys.exit()
-        result = deamon.configure_as_peer(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
-        if result == -1:
-            print("Error al configurar el peer! Verifique que la interfaz no exista")
-        else:
-            print("Peer configurado!")
-        
-    # python3 main.py obtener_clave_publica_cliente
-    elif comando == "obtener_clave_public_cliente":
-        my_public_key = deamon.get_client_public_key()
-        print(f"La clave publica del cliente es: {my_public_key}")
-        
-    # Crear un peer en el servidor
-    # python3 main.py iniciar_interfaz_wireguard <ip_cliente>
-    elif comando == "iniciar_interfaz_wireguard":
-        # Verificar si el comando se ejecuto como administrador en Linux
-        #if os.geteuid() != 0:
-        #    print("Se necesita permisos de administrador para ejecutar el comando")
-        #    sys.exit()
-        #else:
-        if len(sys.argv) != 3:
-            print("Uso: python3 main.py iniciar_interfaz_wireguard <ip_cliente>")
-            sys.exit()
-            
-            deamon.init_wireguard_interface(sys.argv[2])
-
-    # python3 main.py  crear_peer <public_key> <allowed_ips> <ip_cliente> <listen_port>
-    elif comando == "crear_peer":
-        if len(sys.argv) != 6:
-            print("Uso: python3 main.py  crear_peer <public_key> <allowed_ips> <ip_cliente> <listen_port>")
-            sys.exit()
-        deamon.register_peer(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
-
-    # Cuando se quiere elegir el segmento de la VPN
-    # python3 main.py crear_red_privada <nombre> <segmento_red>
-    elif comando == "crear_red_privada":
-        if len(sys.argv) != 4:
-            print("Uso: python3 main.py crear_red_privada <nombre> <segmento_red>")
-            sys.exit()
-        deamon.create_private_network(sys.argv[2], sys.argv[3])
-
-    # -- Cuando se quiere borrar una red
-    #python3 main.py borrar_red_privada <id_red_privada>
-    elif comando == "borrar_red_privada":
-        if len(sys.argv) != 3:
-            print("Uso: python3 main.py borrar_red_privada <id_red_privada>")
-            sys.exit()
-        deamon.delete_private_network(sys.argv[2])
-
-    # -- Cuando se quiere borrar un peer de una red
-    #python3 main.py borrar_red_peer <id_red_privada> <id_endpoint>
-    elif comando == "borrar_red_peer":
-        if len(sys.argv) != 4:
-            print("Uso: python3 main.py borrar_red_peer <id_red_privada> <id_endpoint>")
-            sys.exit()
-        deamon.delete_peer(sys.argv[2], sys.argv[3])
-
-    # -- Cuando se quiere editar el segmento y la mascara de una red
-    #python3 main.py editar_red_privada <id_red_privada> <segmento_red> <mascara_red>
-    elif comando == "editar_red_privada":
-        if len(sys.argv) != 5:
-            print("Uso: python3 main.py editar_red_privada <id_red_privada> <segmento_red> <mascara_red>")
-            sys.exit()
-        deamon.edit_private_network(sys.argv[2], sys.argv[3], sys.argv[4])
-
-    # -- Cuando se quiere editar el nombre de una red 
-    #python3 main.py editar_nombre_red_privada <id_red_privada> <nombre>
-    elif comando == "editar_nombre_red_privada":
-        if len(sys.argv) != 4:
-            print("Uso: python3 main.py editar_nombre_red_privada <id_red_privada> <nombre>")
-            sys.exit()
-        deamon.edit_private_network_name(sys.argv[2], sys.argv[3])
-
-    # -- Cuando se quiere editar la lista de ips permitidas de una red
-    # python3 main.py edit_allow_ips <id_red_privada> <list_allowed_ip>
-    elif comando == "edit_allow_ips":
-        if len(sys.argv) != 4:
-            print("Uso: python3 main.py edit_allow_ips <id_red_privada> <list_allowed_ip>")
-            sys.exit()
-        deamon.edit_allow_ips(sys.argv[2], sys.argv[3])
-
-    # -- Cuando se quiere editar el endpoint de peer
-    # python3 main.py edit_endpoint <id_red_privada> <id_endpoint> <new_endpoint>
-    elif comando == "edit_endpoint":
-        if len(sys.argv) != 4:
-            print("Uso: python3 main.py edit_endpoint <id_red_privada> <id_endpoint> <new_endpoint>")
-            sys.exit()
-        deamon.edit_endpoint(sys.argv[2], sys.argv[3])
-
-    # -- Cuando se quiere editar el puerto de un endpoint de peer
-    # python3 main.py edit_endpoint_port <id_red_privada> <id_endpoint> <new_port>
-    elif comando == "edit_endpoint_port":
-        if len(sys.argv) != 4:
-            print("Uso: python3 main.py edit_endpoint_port <id_red_privada> <id_endpoint> <new_port>")
-            sys.exit()
-        deamon.edit_endpoint_port(sys.argv[2], sys.argv[3])
-
-    # -- Cuando se quiere editar el nombre de un endpoint
-    # python3 main.py edit_endpoint_name <id_red_privada> <id_endpoint> <name>
-    elif comando == "edit_endpoint_name":
-        if len(sys.argv) != 4:
-            print("Uso: python3 main.py edit_endpoint_name <id_red_privada> <id_endpoint> <name>")
-            sys.exit()
-        deamon.edit_endpoint_name(sys.argv[2], sys.argv[3])
-
-    # python3 cerrar_sesion
-    elif comando == "cerrar_sesion":
-        if deamon.cerrar_sesion():
-            print("Se cerro la sesion")
-
-    # Comando no reconocido
-    else:
-        print("Comando no reconocido")
-        sys.exit()
+    main()
