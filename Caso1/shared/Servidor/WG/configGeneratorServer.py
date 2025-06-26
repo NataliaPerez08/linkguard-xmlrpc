@@ -302,3 +302,38 @@ class WireGuardConfigurator:
                 self._run_command(f"ip link delete dev {self.interface_name}")
         except RuntimeError:
             pass  # Don't mask original error with cleanup error
+
+    def clear_interface(self) -> bool:
+        """
+        Completely remove the WireGuard interface and clean up related configuration.
+        
+        Returns:
+            bool: True if interface was removed, False if it didn't exist
+            
+        Raises:
+            RuntimeError: If removal fails
+        """
+        if not self._interface_exists():
+            self.logger.info(f"Interface {self.interface_name} does not exist")
+            return False
+
+        try:
+            self.logger.info(f"Clearing interface {self.interface_name}...")
+            
+            # Bring interface down first
+            self._run_command(f"ip link set down dev {self.interface_name}")
+            
+            # Remove interface
+            self._run_command(f"ip link delete dev {self.interface_name}")
+            
+            # Reset keys
+            self.private_key = None
+            self.public_key = None
+            
+            self.logger.info(f"Successfully cleared interface {self.interface_name}")
+            return True
+
+        except subprocess.CalledProcessError as e:
+            error_msg = f"Failed to clear interface: {e.stderr.strip()}"
+            self.logger.error(error_msg)
+            raise RuntimeError(error_msg)

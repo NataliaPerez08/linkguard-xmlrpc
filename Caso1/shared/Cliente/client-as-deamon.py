@@ -25,7 +25,7 @@ class ClientAsDeamon:
     """
     Clase que representa al cliente como un daemon
     """
-    def __init__(self, dir_servidor, public_ip, port_local=DEFAULT_LOCAL_PORT):
+    def __init__(self, dir_servidor, public_ip, port_local=DEFAULT_LOCAL_PORT, wg_ip="10.0.0.2", wg_port=51820):
         # Configurar logger
         self._setup_logger()
         
@@ -39,8 +39,8 @@ class ClientAsDeamon:
         self.port_local = port_local
         self.wg_public_key = None
         self.wg_private_key = None
-        self.wg_ip = None
-        self.wg_port = None
+        self.wg_ip = wg_ip
+        self.wg_port = wg_port
         self.actual_user = None
         self.public_ip = public_ip
         
@@ -168,7 +168,14 @@ class ClientAsDeamon:
 
     def close_session(self):
         self.logger.info("Cerrando sesión")
+        # Cerrar el servidor XML-RPC
         result = self.orquestador.close_session()
+        # Limpiar configuraciones de Wireguard
+        if self.wg:
+            self.wg.clear_interface()
+            self.logger.info("Interfaz Wireguard eliminada")
+        else:
+            self.logger.warning("No se encontró interfaz Wireguard para eliminar")
         return result
 
     def init_wireguard_interface(self, ip_cliente):
@@ -189,11 +196,8 @@ class ClientAsDeamon:
         self.logger.info(f"IP de Wireguard asignada: {endpoint_ip_WG}")
 
         # Verificar si la interfaz existe
-        if self.wg.check_interface():
-            self.logger.info("Interfaz ya existe")
-        else:
-            self.logger.info("Creando nueva interfaz Wireguard")
-            self.init_wireguard_interface(self.public_ip)
+        self.logger.info("Creando nueva interfaz Wireguard")
+        self.init_wireguard_interface(self.public_ip)
 
         # Configurar peer en local
         self.logger.info("Obteniendo configuración del servidor...")
@@ -204,7 +208,7 @@ class ClientAsDeamon:
         self.logger.debug(f"Configuración del servidor - Clave: {wg_o_pk}, Puerto: {wg_o_port}, IP: {wg_o_ip}")
 
         self.logger.info("Creando peer local...")
-        result = self.wg.create_peer(wg_o_pk, allowed_ips, wg_o_ip, wg_o_port)
+        result = self.wg.add_peer(wg_o_pk, allowed_ips, wg_o_ip, wg_o_port)
         self.logger.info("Peer local creado")
 
         # Registrar peer en el servidor
@@ -227,7 +231,7 @@ class ClientAsDeamon:
         self.logger.info(f"Peer registrado con IP: {endpoint_ip_WG}")
         
         self.logger.info("Registrando peer localmente...")
-        result = self.wg.create_peer(public_key, allowed_ips, ip_cliente, listen_port)
+        result = self.wg.add_peer(public_key, allowed_ips, ip_cliente, listen_port)
         self.logger.info("Peer local registrado")
         return result
 

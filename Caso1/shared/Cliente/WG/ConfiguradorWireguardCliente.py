@@ -176,11 +176,45 @@ class ConfiguradorWireguardCliente:
             error_msg = f"Comando fallido: {command}\nError: {e.stderr.decode().strip()}"
             raise RuntimeError(error_msg)
 
-    def cleanup(self) -> None:
-        """Elimina la interfaz Wireguard."""
+   
+    def clear_interface(self) -> bool:
+        """
+        Elimina completamente la interfaz WireGuard y limpia la configuración relacionada.
+        
+        Returns:
+            bool: True si la interfaz fue eliminada, False si no existía
+            
+        Raises:
+            RuntimeError: Si falla la eliminación
+        """
+        if not self._interface_exists():
+            print(f"La interfaz {self.interface_name} no existe")
+            return False
+
         try:
-            if self._interface_exists():
-                self._run_command(f"ip link delete dev {self.interface_name}")
-                print(f"Interfaz {self.interface_name} eliminada")
+            print(f"Eliminando interfaz {self.interface_name}...")
+            
+            # Primero desactivar la interfaz
+            self._run_command(f"ip link set down dev {self.interface_name}")
+            
+            # Eliminar la interfaz
+            self._run_command(f"ip link delete dev {self.interface_name}")
+            
+            # Limpiar las propiedades de la clase
+            self.private_key = None
+            self.public_key = None
+            self.ip_wg = None
+            
+            print(f"Interfaz {self.interface_name} eliminada correctamente")
+            return True
+
+        except subprocess.CalledProcessError as e:
+            error_msg = f"Error al eliminar la interfaz: {e.stderr.decode().strip()}"
+            raise RuntimeError(error_msg)
+
+    def cleanup(self) -> None:
+        """Alias para clear_interface() (mantenido por compatibilidad)"""
+        try:
+            self.clear_interface()
         except RuntimeError as e:
-            print(f"Error al limpiar: {e}")
+            print(f"Error durante limpieza: {e}")

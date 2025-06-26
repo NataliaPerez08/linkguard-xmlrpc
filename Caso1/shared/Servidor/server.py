@@ -10,7 +10,7 @@ import os
 import sys
 
 class Servidor:
-    def __init__(self):
+    def __init__(self,wg_ip="10.0.0.1", wg_port=51820):
         self.dir = "0.0.0.0"
         self.port = 8000
         self.xmlrpc_server = SimpleXMLRPCServer((self.dir, self.port))
@@ -25,9 +25,9 @@ class Servidor:
         self.wg_private_key = None
         self.wg_public_key = None
         # La ip del servidor Wireguard
-        self.wg_ip = "10.0.0.1"
+        self.wg_ip = wg_ip
         # El puerto del servidor Wireguard
-        self.wg_port = 51820
+        self.wg_port = wg_port  
         # La ip publica del servidor Wireguard
         self.public_ip = "172.20.0.11"
 
@@ -80,9 +80,11 @@ class Servidor:
 
     def close_session(self):
         """
-        Cierra la sesión del usuario
+        Cierra la sesión del usuario y elimina la interfaz Wireguard actual
         """
         self.usuario = None
+        self.wg.clear_interface()
+        print("Sesión cerrada y la interfaz Wireguard eliminada.")
         return True
 
     def create_private_network(self,net_name) -> int:
@@ -191,8 +193,7 @@ class Servidor:
     def create_peer(self, public_key, allowed_ips, endpoint_ip_WG, listen_port, ip_cliente):
         print("Crear peer en el servidor")
         print(public_key, allowed_ips, endpoint_ip_WG, listen_port, ip_cliente)
-
-        wg.create_peer(public_key, allowed_ips, ip_cliente, listen_port)
+        self.wg.add_peer(public_key, allowed_ips, endpoint_ip_WG, listen_port)
         print("IP de Wireguard asignada: ", endpoint_ip_WG)
         return endpoint_ip_WG
 
@@ -202,9 +203,6 @@ class Servidor:
         private_key, public_key = self.wg.create_keys()
         self.wg_public_key = public_key
         self.wg_private_key = private_key
-        # Crear la interfaz de Wireguard
-        self.wg_ip = "10.0.0.1"
-        self.wg_port = 51820
         self.wg.create_interface(self.wg_ip)
 
     def connect_peers(ip_i, ip_j, port_i, port_j):

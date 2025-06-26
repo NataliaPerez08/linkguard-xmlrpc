@@ -77,7 +77,7 @@ class WireGuardCLI:
         
         print("\n🔐 Redes Privadas:")
         for i, red in enumerate(result, 1):
-            print(f"  {i}. {red['nombre']} (ID: {red['id']})")
+            print(red)
         return result
 
     def ver_endpoints(self, id_red_privada):
