@@ -337,3 +337,4 @@ class WireGuardConfigurator:
             error_msg = f"Failed to clear interface: {e.stderr.strip()}"
             self.logger.error(error_msg)
             raise RuntimeError(error_msg)
+        

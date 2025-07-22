@@ -9,15 +9,9 @@ python3 main.py ver_endpoints <id_red_privada>
 python3 main.py conectar_endpoint <id_endpoint> <id_red_privada>
 python3 main.py conectar_endpoint_directo <ip_wg_endpoint> <puerto_wg_endpoint>
 
-python3 main.py obtener_clave_publica_servidor
-python3 main.py obtener_configuracion_wireguard_local
-python3 main.py obtener_configurarion_wireguard_servidor
-python3 main.py añadir_ip_publica <ip>
-
 python3 main.py consultar_ip_publica_cliente
 python3 main.py registrar_como_peer <nombre> <id_red_privada> <ip_cliente> <puerto_cliente> 
 
-python3 main.py obtener_clave_publica_cliente
 
 python3 main.py init_wireguard_interfaz <ip_cliente>
 
