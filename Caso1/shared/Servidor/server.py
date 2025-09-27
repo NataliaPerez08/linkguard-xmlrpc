@@ -10,7 +10,7 @@ import os
 import sys
 
 class Servidor:
-    def __init__(self,wg_ip="10.0.0.1", wg_port=51820):
+    def __init__(self,public_ip, wg_port=51820):
         self.dir = "0.0.0.0"
         self.port = 8000
         self.xmlrpc_server = SimpleXMLRPCServer((self.dir, self.port))
@@ -25,11 +25,11 @@ class Servidor:
         self.wg_private_key = None
         self.wg_public_key = None
         # La ip del servidor Wireguard
-        self.wg_ip = wg_ip
+        self.wg_ip = "100.10.0.1"
         # El puerto del servidor Wireguard
         self.wg_port = wg_port  
         # La ip publica del servidor Wireguard
-        self.public_ip = "172.20.0.11"
+        self.public_ip = public_ip
 
         self.wg = wg.WireGuardConfigurator()
 
@@ -96,7 +96,7 @@ class Servidor:
         else:
             # Crear la red privada
             counter = self.usuario.private_network_counter
-            red = rp.PrivateNetwork(counter, net_name,'10.0.0.0', 28)
+            red = rp.PrivateNetwork(counter, net_name,'100.10.0.0', 24)
             self.usuario.private_networks[str(red.id)] = red
             self.usuario.private_network_counter += 1
             return red.id
@@ -211,7 +211,10 @@ class Servidor:
         # Save the IP Tables Rules
         wg.save_iptables()
 
-server = Servidor()
+if len(sys.argv) < 1:
+    print("Ingresa la IP publica del orquestador!")
+
+server = Servidor(sys.argv[1])
 # Verifica que se ejecute como root
 if os.geteuid() != 0:
     print("Necesitas ejecutar este script como root!")

@@ -25,7 +25,7 @@ class ClientAsDeamon:
     """
     Clase que representa al cliente como un daemon
     """
-    def __init__(self, dir_servidor, public_ip, port_local=DEFAULT_LOCAL_PORT, wg_ip="10.0.0.2", wg_port=51820):
+    def __init__(self, dir_servidor, public_ip, port_local=DEFAULT_LOCAL_PORT, wg_ip="100.10.0.2", wg_port=51820):
         # Configurar logger
         self._setup_logger()
         
