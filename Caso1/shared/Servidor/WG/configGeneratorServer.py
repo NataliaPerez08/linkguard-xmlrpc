@@ -128,7 +128,7 @@ class WireGuardConfigurator:
             # Add peer if configuration provided
             if peer_config:
                 self.add_peer(
-                    public_key=peer_config.get('public_key'),
+                    public_key=peer_config.get('public_key'), # type: ignore
                     allowed_ips=peer_config.get('allowed_ips', []),
                     endpoint_ip=peer_config.get('endpoint_ip'),
                     endpoint_port=peer_config.get('endpoint_port')
@@ -147,7 +147,7 @@ class WireGuardConfigurator:
             raise RuntimeError(error_msg)
 
     def add_peer(self, public_key: str, 
-                allowed_ips: Union[str, List[str]] = None, 
+                allowed_ips: Union[str, List[str]] = None,  # type: ignore
                 endpoint_ip: Optional[str] = None, 
                 endpoint_port: Optional[int] = None) -> None:
         """
@@ -196,7 +196,7 @@ class WireGuardConfigurator:
             self.logger.error(error_msg)
             raise RuntimeError(error_msg)
 
-    def configure_firewall(self, local_ips: List[str] = None, external_interface: str = "eth0") -> None:
+    def configure_firewall(self, local_ips: List[str], external_interface: str = "eth0") -> None:
         """
         Configure firewall rules for WireGuard traffic.
         

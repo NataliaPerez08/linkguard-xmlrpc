@@ -20,7 +20,7 @@ class Servidor:
         self.usuario = None
 
         # Lista de usuarios [id: Usuario]
-        self.usuarios = dict()
+        self.usuarios = {}
         # Llave pública de Wireguard del orquestador
         self.wg_private_key = None
         self.wg_public_key = None
@@ -67,6 +67,7 @@ class Servidor:
                 return True
         except:
             return False
+            raise
         return  False
 
     def whoami(self):
@@ -111,17 +112,17 @@ class Servidor:
             user_private_networks = self.usuario.get_private_networks()
             return [str(red) for red in user_private_networks.values()]
 
-    def get_private_network_by_id(self, net_id):
+    def get_private_network_by_id(self, net_id) -> rp.PrivateNetwork:
         """
         Recupera una red privada por su id
         """
         if self.usuario is None:
-            return -1
+            return -1 # type: ignore
         else:
             private_network = self.usuario.get_private_network_by_id(net_id)
             print("Private network:",private_network, type(private_network))
             if private_network is None:
-                return -1
+                return -1 # type: ignore
             return private_network
 
     def create_endpoint(self, private_network_id, endpoint_name):
@@ -140,7 +141,7 @@ class Servidor:
             print("Endpoint creado! ",endpoint.get_id())
             return endpoint.get_wireguard_ip(), endpoint.get_id()
         
-    def complete_endpoint(self,id_red_privada, id_endpoint, wg_public_key, allowed_ips, ip_cliente, listen_port):
+    def complete_endpoint(self,id_red_privada, id_endpoint, wg_public_key, allowed_ips, ip_client, listen_port):
         """
         Completa la configuración del endpoint
         """
@@ -156,7 +157,7 @@ class Servidor:
         endpoint.set_wireguard_public_key(wg_public_key)
         endpoint.set_allowed_ips(allowed_ips)
         endpoint.set_listen_port(listen_port)
-        endpoint.set_wireguard_ip(ip_cliente)
+        endpoint.set_wireguard_ip(ip_client)
         return True
 
     def get_endpoints(self, private_network_id):
@@ -167,7 +168,7 @@ class Servidor:
             return []
         else:
             private_network = self.get_private_network_by_id(private_network_id)
-            return private_network.endpoints
+            return private_network.get_endpoints() 
 
     def get_public_key(self):
         """
@@ -190,12 +191,12 @@ class Servidor:
         print("Puerto Wireguard del servidor: ", self.wg_port)
         return self.wg_public_key, self.wg_port, self.public_ip
 
-    def create_peer(self, public_key, allowed_ips, endpoint_ip_WG, listen_port, ip_cliente):
+    def create_peer(self, public_key, allowed_ips, endpoint_ip_wg, listen_port, ip_cliente):
         print("Crear peer en el servidor")
-        print(public_key, allowed_ips, endpoint_ip_WG, listen_port, ip_cliente)
-        self.wg.add_peer(public_key, allowed_ips, endpoint_ip_WG, listen_port)
-        print("IP de Wireguard asignada: ", endpoint_ip_WG)
-        return endpoint_ip_WG
+        print(public_key, allowed_ips, endpoint_ip_wg, listen_port, ip_cliente)
+        self.wg.add_peer(public_key, allowed_ips, endpoint_ip_wg, listen_port)
+        print("IP de Wireguard asignada: ", endpoint_ip_wg)
+        return endpoint_ip_wg
 
 
     def init_wireguard(self):
@@ -205,15 +206,13 @@ class Servidor:
         self.wg_private_key = private_key
         self.wg.create_interface(self.wg_ip)
 
-    def connect_peers(ip_i, ip_j, port_i, port_j):
-        # Set Up IP Tables Rules on Host Z To allow traffic to be forwarded between host A and host B, you need to set up appropriate iptables rules on host Z.
-        wg.setup_iptables(ip_i, ip_j)
-        # Save the IP Tables Rules
-        wg.save_iptables()
+    def connect_peers(self, private_network_id):
+        local_ips = [str(x) for x in self.get_allowed_ips(private_network_id())]
+        wg.configure_firewall(local_ips)   # type: ignore
 
 server = Servidor()
 # Verifica que se ejecute como root
-if os.geteuid() != 0:
+if os.geteuid() != 0: # type: ignore
     print("Necesitas ejecutar este script como root!")
     sys.exit(1)
 server.init_wireguard()
