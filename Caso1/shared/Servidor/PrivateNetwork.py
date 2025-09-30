@@ -21,9 +21,6 @@ class PrivateNetwork:
     def get_name(self):
         return self.name
     
-    def get_endpoints(self):
-        return self.endpoints
-    
     def get_segment(self):
         return self.segment
     
@@ -31,9 +28,9 @@ class PrivateNetwork:
         return self.mask_network
     
     def get_available_hosts(self):
-        if len(self.available_hosts) == 0:
+        if len(self.available_hosts) == 0: # type: ignore
             return []
-        return [str(host) for host in self.available_hosts]
+        return [str(host) for host in self.available_hosts] # type: ignore
     
     def get_endpoints(self):
         return list(self.endpoints.values())
@@ -59,10 +56,10 @@ class PrivateNetwork:
     
     def calculate_next_host(self):
         print("Calculando siguiente dirección IP disponible...")
-        if len(self.available_hosts) == 0:
+        if len(self.available_hosts) == 0: # type: ignore
             print("No hay direcciones IP disponibles!")
             return None
-        next_host = self.available_hosts.pop(0)
+        next_host = self.available_hosts.pop(0) # type: ignore
         return str(next_host)
     
     def create_endpoint(self, name) -> Endpoint:
