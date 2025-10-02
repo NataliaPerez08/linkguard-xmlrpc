@@ -12,7 +12,7 @@ import WG.ConfiguradorWireguardCliente as ConfiguradorWireguardCliente
 
 # Importar os
 from os import geteuid
-from sys import exit
+from sys import exit, argv
 
 # Constantes
 DEFAULT_SERVER_PORT = 8000
@@ -241,9 +241,14 @@ if __name__ == "__main__":
         print("Se necesita permisos de administrador para ejecutar el servidor")
         exit()
     
+    if len(argv) < 3:
+        print("Ingresa la IP del orquestador!")
+        print("Ingresa la IP del orquestador!")
+        exit()
+
     # Configuración
-    SERVER_ADDRESS = "localhost"  # Cambiar por la dirección del servidor
-    CLIENT_PUBLIC_IP = "0.0.0.0"  # Cambiar por la IP pública del cliente
+    SERVER_ADDRESS = argv[1]#"localhost"  # Cambiar por la dirección del servidor
+    CLIENT_PUBLIC_IP = argv[2]#"0.0.0.0"  # Cambiar por la IP pública del cliente
     
     client_as_deamon = ClientAsDeamon(SERVER_ADDRESS, CLIENT_PUBLIC_IP) 
     client_as_deamon.start_server()

@@ -7,7 +7,7 @@ import PrivateNetwork as rp
 import WG.configGeneratorServer as wg
 
 import os
-import sys
+from sys import exit,argv
 
 class Servidor:
     def __init__(self,public_ip, wg_port=51820):
@@ -210,14 +210,14 @@ class Servidor:
         local_ips = [str(x) for x in self.get_allowed_ips(private_network_id())]
         wg.configure_firewall(local_ips)   # type: ignore
 
-if len(sys.argv) < 1:
+if len(argv) < 2:
     print("Ingresa la IP publica del orquestador!")
 
-server = Servidor(sys.argv[1])
+server = Servidor(argv[1])
 # Verifica que se ejecute como root
 if os.geteuid() != 0: # type: ignore
     print("Necesitas ejecutar este script como root!")
-    sys.exit(1)
+    exit(1)
 server.init_wireguard()
 print("Listening on port ",server.port)
 server.iniciar()

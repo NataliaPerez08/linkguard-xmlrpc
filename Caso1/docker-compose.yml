@@ -16,7 +16,7 @@ services:
         ipv4_address: 172.20.0.10
     cap_add:
       - NET_ADMIN
-    command: python3 /shared/WG/Servidor/server.py   # <-- Ejecuta el server
+    command: python3 /shared/WG/Servidor/server.py 172.20.0.10 # <-- Ejecuta el server
 
   alma2:
     build: .
@@ -31,7 +31,7 @@ services:
         ipv4_address: 172.20.0.11
     cap_add:
       - NET_ADMIN
-    command: python3 /shared/WG/Cliente/client-as-deamon.py   # <-- Ejecuta el cliente
+    command: python3 /shared/WG/Cliente/client-as-deamon.py 172.20.0.10 172.20.0.11 # <-- Ejecuta el cliente
 
   alma3:
     build: .
