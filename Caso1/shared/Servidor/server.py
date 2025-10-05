@@ -12,7 +12,7 @@ from sys import exit,argv
 class Servidor:
     def __init__(self,public_ip, wg_port=51820):
         self.dir = "0.0.0.0"
-        self.port = 8000
+        self.port = 8080
         self.xmlrpc_server = SimpleXMLRPCServer((self.dir, self.port))
         self.xmlrpc_server.register_instance(self)
 

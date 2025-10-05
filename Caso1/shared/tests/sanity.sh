@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SERVER_IP="${SERVER_IP:-172.20.0.10}"
-#SERVER_PORT="${SERVER_PORT:-8000}"
+#SERVER_PORT="${SERVER_PORT:-8080}"
 
 CLIENTS=("alma2" "alma3")
 

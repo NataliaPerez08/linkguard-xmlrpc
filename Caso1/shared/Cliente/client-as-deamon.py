@@ -15,7 +15,7 @@ from os import geteuid
 from sys import exit, argv
 
 # Constantes
-DEFAULT_SERVER_PORT = 8000
+DEFAULT_SERVER_PORT = 8080
 DEFAULT_LOCAL_PORT = 3041
 DEFAULT_LOCAL_ADDRESS = "0.0.0.0"
 LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'

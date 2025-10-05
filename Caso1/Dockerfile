@@ -1,17 +1,36 @@
 FROM almalinux:9
 
-# Actualiza el sistema e instala los paquetes necesarios
-RUN dnf update -y && \
-    dnf install -y git net-tools wireguard-tools iproute && \
-    dnf install -y python3 python3-pip python3-scapy && \
-    # Instalar netcat
-    dnf install -y nmap-ncat && \
-    dnf clean all
+# Paquetes base y cliente SSH
+RUN dnf -y update && \
+    dnf -y install \
+      git \
+      net-tools \
+      iproute \
+      iputils \
+      wireguard-tools \
+      python3 python3-pip \
+      python3-scapy \
+      nmap-ncat \
+      openssh-clients \
+      jq \
+      which \
+      procps-ng \
+    && dnf clean all
 
-#RUN git clone https://github.com/NataliaPerez08/linkguard-xmlrpc.git
+# Directorios de trabajo
+RUN mkdir -p /shared/tests/artifacts /shared/WG/Cliente
 
-# Comando por defecto para mantener el contenedor en ejecución
+# Variables por defecto (puedes overridear al correr el contenedor)
+ENV SERVER_IP=172.20.0.10 \
+    SERVER_PORT=8080 \
+    ALMA2_IP=172.20.0.11 \
+    ALMA3_IP=172.20.0.12 \
+    SSH_USER=tester \
+    SSH_PORT=22 \
+    SSH_KEY_PATH=/shared/tests/id_ed25519
+
+# Mantener vivo para debug
 CMD ["tail", "-f", "/dev/null"]
 
-# Exponer el puerto 8000
-EXPOSE 8000
+# Puerto de app si
+EXPOSE 8080
