@@ -1,0 +1,10 @@
+[2025-10-05 22:47:48] [S1] Flujo exacto requerido: registrar_usuario → crear_red_privada → registrar_como_peer(A) → registrar_como_peer(B) → ping
+[2025-10-05 22:47:48] [alma2] CLI(argv): python3 /shared/Cliente/main.py registrar_usuario n1 n1 pas 
+[2025-10-05 22:47:48] [alma2] CLI(argv): python3 /shared/Cliente/main.py crear_red_privada vpn1 
+[2025-10-05 22:47:49] [alma2] CLI(argv): python3 /shared/Cliente/main.py registrar_como_peer e1 0 172.20.0.11 51820 
+[2025-10-05 22:47:51] [alma3] CLI(argv): python3 /shared/Cliente/main.py registrar_como_peer e1 0 172.20.0.12 51821 
+[2025-10-05 22:47:52] [S1] Esperando wg0 con IP en ambos clientes…
+[2025-10-05 22:47:54] [S1] wg0 alma2 = 100.10.0.2 ; wg0 alma3 = 100.10.0.3
+[2025-10-05 22:47:55] ✅ ping alma2→alma3 (wg): OK
+[2025-10-05 22:47:55] ✅ ping alma3→alma2 (wg): OK
+✅ [S1] COMPLETO: usuario creado, vpn creada, endpoints registrados, wg0 con IP en ambos y ping ok

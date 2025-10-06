@@ -5,7 +5,7 @@ COMPOSE := $(shell docker compose version >/dev/null 2>&1 && echo "docker compos
 
 SERVER_IP    ?= 172.20.0.10
 SERVER_PORT  ?= 8080
-ARTIFACTS_DIR ?= ./shared/tests/artifacts
+ARTIFACTS_DIR ?= ./artifacts
 SANITY_SCRIPT ?= ./sanity.sh
 E2E_SCRIPT    ?= /shared/tests/cli_e2e_all.sh
 
@@ -82,14 +82,22 @@ sanity:
 	@echo "== SANITY =="
 	SERVER_IP=$(SERVER_IP) SERVER_PORT=$(SERVER_PORT) bash $(SANITY_SCRIPT)
 
-e2e: wait
-	@echo "== E2E en $(S) =="
-	$(COMPOSE) exec -T $(S) bash -lc 'set -euxo pipefail; timeout 180s bash /shared/tests/cli_e2e_all.sh'
-
-
 test: sanity
 	@echo "== TEST (E2E) en alma2 =="
 	$(COMPOSE) exec -T $(ALMA2) bash -lc "bash $(E2E_SCRIPT)"
+
+# Ejecuta desde el HOST, con paths relativos
+e2e-s1:
+	SERVER_IP=$(SERVER_IP) SERVER_PORT=$(SERVER_PORT) bash ./e2e_s1.sh
+
+e2e-s2:
+	SERVER_IP=$(SERVER_IP) SERVER_PORT=$(SERVER_PORT) bash ./e2e_s2.sh
+
+e2e-s3:
+	SERVER_IP=$(SERVER_IP) SERVER_PORT=$(SERVER_PORT) bash ./e2e_s3.sh
+
+e2e-all: e2e-s1 e2e-s2 e2e-s3
+	@echo "== E2E (todos los casos) OK =="
 
 # ---------- Shells ----------
 sh1:

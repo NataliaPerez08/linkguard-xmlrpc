@@ -9,3 +9,11 @@ python3 main.py  crear_peer xTIBA5rboUvnH4htodjb6e697QjLERt1NAB4mZqp8Dg= 192.168
 
 
 python3 main.py registrar_como_peer e1 0 192.168.68.94 8172
+
+
+
+python3 main.py registrar_usuario n1 n1 pas
+python3 main.py crear_red_privada vpn1
+python3 main.py registrar_como_peer e1 0 <ip_cliente> <puerto_cliente> # en alma2
+python3 main.py registrar_como_peer e1 0 <ip_cliente> <puerto_cliente> # en alma3
+--Hacer prueba de ping

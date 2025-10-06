@@ -197,7 +197,7 @@ class ClientAsDeamon:
 
         # Verificar si la interfaz existe
         self.logger.info("Creando nueva interfaz Wireguard")
-        self.init_wireguard_interface(self.public_ip)
+        self.init_wireguard_interface(endpoint_ip_WG)
 
         # Configurar peer en local
         self.logger.info("Obteniendo configuración del servidor...")
