@@ -190,3 +190,24 @@ workflow_core() {
 
   ok "Core OK (VPC: ${NET_ID})"
 }
+
+chain_flush() {
+  local svc="$1" b; b="$(fw_backend "$svc")"
+  case "$b" in
+    iptables) rin "$svc" 'iptables -F E2E_BLOCK 2>/dev/null || true' ;;
+    nft)      rin "$svc" 'nft flush chain inet e2e in 2>/dev/null || true; nft flush chain inet e2e out 2>/dev/null || true' ;;
+  esac
+}
+
+ensure_hook() {
+  local svc="$1" b; b="$(fw_backend "$svc")"
+  case "$b" in
+    iptables)
+      rin "$svc" 'iptables -C INPUT -j E2E_BLOCK 2>/dev/null || iptables -I INPUT 1 -j E2E_BLOCK'
+      ;;
+    nft)
+      # en nft ya creamos una chain base con hook input en chain_setup
+      :
+      ;;
+  esac
+}

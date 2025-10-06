@@ -1,0 +1,17 @@
+[2025-10-06 10:11:44] [S3] Flujo: registrar_usuario → crear_red_privada → registrar_como_peer(A,B) → probar NO-directo en ambos sentidos → conectar_endpoint(A,B) → esperar wg0 → ping wg↔wg
+[2025-10-06 10:11:50] [alma2] CLI(argv): python3 /shared/Cliente/main.py registrar_usuario n3 n3 pas3 
+[2025-10-06 10:11:50] [alma2] CLI(argv): python3 /shared/Cliente/main.py crear_red_privada vpn3 
+[2025-10-06 10:11:51] [alma2] CLI(argv): python3 /shared/Cliente/main.py registrar_como_peer e3a 0 172.20.0.11 51820 
+[2025-10-06 10:11:52] [alma3] CLI(argv): python3 /shared/Cliente/main.py registrar_como_peer e3b 0 172.20.0.12 51821 
+[2025-10-06 10:11:54] [S3] Verificando que NO hay conectividad directa entre alma2 y alma3 (en ningún sentido):
+[2025-10-06 10:11:56] ✅ ping directo alma2→alma3 BLOQUEADO: BLOQUEADO
+[2025-10-06 10:11:56] ✅ UDP alma2→alma3:51821 BLOQUEADO: BLOQUEADO (UDP)
+[2025-10-06 10:11:58] ✅ ping directo alma3→alma2 BLOQUEADO: BLOQUEADO
+[2025-10-06 10:11:59] ✅ UDP alma3→alma2:51820 BLOQUEADO: BLOQUEADO (UDP)
+[2025-10-06 10:11:59] [alma2] CLI(argv): python3 /shared/Cliente/main.py ver_endpoints 0 
+[2025-10-06 10:11:59] [alma3] CLI(argv): python3 /shared/Cliente/main.py ver_endpoints 0 
+[2025-10-06 10:12:00] [S3] Esperando wg0 con IP en ambos clientes…
+[2025-10-06 10:12:02] [S3] wg0 alma2 = 100.10.0.2 ; wg0 alma3 = 100.10.0.3
+[2025-10-06 10:12:02] ✅ ping alma2→alma3 (wg, mediado por orquestador): OK
+[2025-10-06 10:12:03] ✅ ping alma3→alma2 (wg, mediado por orquestador): OK
+✅ [S3] COMPLETO: sin conectividad directa en ningún sentido, conexión mediada por orquestador, wg0 con IP y ping wg↔wg OK
