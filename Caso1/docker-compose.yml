@@ -8,14 +8,17 @@ services:
     stdin_open: true
     volumes:
       - ./shared:/shared
-    ports:
-      - "8080:8080"
     networks:
       almanet:
         ipv4_address: 172.20.0.10
-    cap_add:
-      - NET_ADMIN
-    command: python3 /shared/Servidor/server.py 172.20.0.10 # <-- Ejecuta el server
+    cap_add: [NET_ADMIN]
+    # Server: escucha en 8000
+    command: python3 /shared/Servidor/server.py 172.20.0.10
+    ports:
+      - "8080:8080"
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
 
   alma2:
     build: .
@@ -28,9 +31,13 @@ services:
     networks:
       almanet:
         ipv4_address: 172.20.0.11
-    cap_add:
-      - NET_ADMIN
-    command: python3 /shared/Cliente/client-as-deamon.py 172.20.0.10 172.20.0.11 # <-- Cliente (alma2)
+    cap_add: [NET_ADMIN]
+    depends_on: [alma1]
+    # Cliente: daemon con su IP de transporte
+    command: python3 /shared/Cliente/client-as-deamon.py 172.20.0.10 172.20.0.11
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
 
   alma3:
     build: .
@@ -43,9 +50,32 @@ services:
     networks:
       almanet:
         ipv4_address: 172.20.0.12
-    cap_add:
-      - NET_ADMIN
-    command: python3 /shared/Cliente/client-as-deamon.py 172.20.0.10 172.20.0.12 # <-- Cliente (alma3)
+    cap_add: [NET_ADMIN]
+    depends_on: [alma1]
+    command: python3 /shared/Cliente/client-as-deamon.py 172.20.0.10 172.20.0.12
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  # Tercer peer (solo se levanta con --profile three)
+  alma4:
+    build: .
+    container_name: alma4
+    hostname: alma4
+    tty: true
+    stdin_open: true
+    volumes:
+      - ./shared:/shared
+    networks:
+      almanet:
+        ipv4_address: 172.20.0.13
+    cap_add: [NET_ADMIN]
+    depends_on: [alma1]
+    command: python3 /shared/Cliente/client-as-deamon.py 172.20.0.10 172.20.0.13
+    profiles: ["three"]
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
 
 networks:
   almanet:

@@ -1,38 +1,32 @@
 FROM almalinux:9
 
-# Paquetes base + networking + iptables/nftables
+# Paquetes base + red + firewall + utilidades
 RUN dnf -y update && \
     dnf -y install \
-      git \
-      net-tools \
-      iproute \
-      iputils \
+      iproute iputils net-tools \
       wireguard-tools \
-      iptables \
-      nftables \
-      python3 python3-pip \
-      python3-scapy \
+      python3 python3-pip python3-scapy \
       nmap-ncat \
       openssh-clients \
-      jq \
-      which \
-      procps-ng && \
-    dnf clean all
+      jq which procps-ng \
+      iptables nftables conntrack-tools \
+    && dnf clean all
 
-# (Opcional, normalmente no hace falta en EL9, pero si quieres forzar backend nft)
-RUN alternatives --set iptables /usr/sbin/iptables-nft || true
+# Que /usr/sbin y /sbin estén en PATH en shells no-login
+ENV PATH="/usr/sbin:/sbin:${PATH}"
 
 # Directorios de trabajo
 RUN mkdir -p /shared/tests/artifacts /shared/Cliente
 
-# Variables por defecto
+# Valores por defecto (overrideables)
 ENV SERVER_IP=172.20.0.10 \
-    SERVER_PORT=8000 \
+    SERVER_PORT=8080 \
     ALMA2_IP=172.20.0.11 \
-    ALMA3_IP=172.20.0.12
+    ALMA3_IP=172.20.0.12 \
+    ALMA4_IP=172.20.0.13
 
-# Mantener vivo para debug
+# Mantener vivo para depurar
 CMD ["tail", "-f", "/dev/null"]
 
-# Puerto de app (tu stack usa 8000)
-EXPOSE 8000
+# Puerto de la app del servidor
+EXPOSE 8080
